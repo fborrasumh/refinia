@@ -3,963 +3,1959 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NarrativIA · del cuaderno a la sección de Resultados</title>
-<meta name="description" content="Convierte un cuaderno Jupyter/Colab ejecutado en la sección de Resultados de un manuscrito científico, con auditoría de cifras. UMH.">
+<title>RefinIA · Verificación de manuscritos</title>
+<meta name="description" content="Verificación independiente de manuscritos académicos: detecta errores de exactitud, razonamiento, consistencia interna y referencias antes de enviar el trabajo.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
 <style>
 :root{
-  --ink:#12222B; --ink2:#1B3440; --ink3:#27454F;
-  --paper:#FBFAF7; --paper2:#F2EFE8; --paper3:#E8E4DA;
-  --petrol:#0E6E78; --petrol-d:#0A545C; --petrol-l:#D6EAEB;
-  --ochre:#B8722A; --ochre-l:#F7E9D4;
-  --muted:#67787F; --line:#DED9CF; --alert:#A33B2A;
-  --serif:'IBM Plex Serif',Georgia,serif;
-  --sans:'IBM Plex Sans',system-ui,sans-serif;
-  --mono:'IBM Plex Mono',ui-monospace,monospace;
-  --r:3px;
+  --canvas:#E7EAEE;
+  --paper:#FFFFFF;
+  --ink:#12161C;
+  --ink-2:#4E5765;
+  --ink-3:#7C8695;
+  --rule:#D5DAE1;
+  --rule-soft:#E8ECF1;
+  --accent:#1B3FA0;
+  --accent-soft:#E6EBF8;
+  --alta:#A81E22;
+  --media:#8F6100;
+  --baja:#2C6E8E;
+  --ok:#2E6B45;
+  --alta-bg:#FBE9E9;
+  --media-bg:#FAF1DF;
+  --baja-bg:#E6F0F5;
+  --shadow:0 1px 2px rgba(18,22,28,.06), 0 8px 24px rgba(18,22,28,.07);
+  --sans:"IBM Plex Sans", system-ui, -apple-system, Segoe UI, sans-serif;
+  --serif:"Source Serif 4", Georgia, "Times New Roman", serif;
 }
 *{box-sizing:border-box}
-html,body{margin:0;padding:0}
-body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
-a{color:var(--petrol)}
-button{font-family:inherit}
-::selection{background:var(--petrol-l)}
-
-/* ---------- cabecera ---------- */
-header.top{position:sticky;top:0;z-index:60;background:var(--ink);color:var(--paper);border-bottom:1px solid #000}
-.top-in{max-width:1280px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-.brand{font-family:var(--serif);font-weight:600;font-size:20px;letter-spacing:-.2px}
-.brand em{font-style:italic;color:var(--ochre);font-weight:400}
-.brand-sub{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#8FA6AD;margin-left:2px}
-.top .sp{flex:1}
-.tbtn{background:transparent;border:1px solid #38545F;color:#CFE0E3;padding:6px 12px;border-radius:var(--r);font-size:12.5px;cursor:pointer}
-.tbtn:hover{border-color:var(--petrol);background:#0d2a33}
-.tbtn.on{background:var(--petrol);border-color:var(--petrol);color:#fff}
-
-/* ---------- pasos ---------- */
-.steps{max-width:1280px;margin:0 auto;padding:0 20px;display:flex;gap:0;border-bottom:1px solid var(--line);flex-wrap:wrap}
-.step{display:flex;align-items:baseline;gap:8px;padding:12px 18px 10px 0;margin-right:18px;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;background:none;border-top:0;border-left:0;border-right:0}
-.step b{font-family:var(--mono);font-size:11px;color:var(--paper3);background:var(--ink3);padding:2px 6px;border-radius:2px}
-.step.done b{background:var(--petrol);color:#fff}
-.step.act{color:var(--ink);border-bottom-color:var(--ochre);font-weight:600}
-.step.act b{background:var(--ochre);color:#fff}
-
-main{max-width:1280px;margin:0 auto;padding:26px 20px 90px}
-section.blk{margin-bottom:38px;scroll-margin-top:110px}
-h2.sec{font-family:var(--serif);font-size:23px;font-weight:600;margin:0 0 4px;letter-spacing:-.3px}
-p.lead{color:var(--muted);margin:0 0 18px;max-width:70ch;font-size:14px}
-
-/* ---------- zona de carga ---------- */
-.drop{border:1.5px dashed var(--line);background:var(--paper2);border-radius:var(--r);padding:38px 24px;text-align:center;transition:.15s}
-.drop.hot{border-color:var(--petrol);background:var(--petrol-l)}
-.drop h3{font-family:var(--serif);font-size:19px;margin:0 0 6px;font-weight:600}
-.drop p{color:var(--muted);font-size:13.5px;margin:0 0 16px}
-.btn{background:var(--petrol);color:#fff;border:1px solid var(--petrol-d);padding:9px 18px;border-radius:var(--r);font-size:14px;font-weight:500;cursor:pointer}
-.btn:hover{background:var(--petrol-d)}
-.btn:disabled{opacity:.45;cursor:not-allowed}
-.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
-.btn.ghost:hover{background:var(--paper2)}
-.btn.ochre{background:var(--ochre);border-color:#96591d}
-.btn.ochre:hover{background:#96591d}
-.btn.sm{padding:5px 11px;font-size:12.5px}
-
-/* ---------- ficha del cuaderno ---------- */
-.nbcard{display:flex;gap:22px;align-items:center;flex-wrap:wrap;background:var(--ink);color:var(--paper);padding:16px 20px;border-radius:var(--r)}
-.nbcard .name{font-family:var(--mono);font-size:14px;color:#fff}
-.nbcard .meta{font-family:var(--mono);font-size:11.5px;color:#8FA6AD;letter-spacing:.04em}
-.stat{display:flex;flex-direction:column}
-.stat span{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#7E969E}
-.stat b{font-family:var(--serif);font-size:21px;font-weight:600;line-height:1.1}
-
-/* ---------- inventario (elemento firma: interlineal) ---------- */
-.inv{border-top:1px solid var(--line)}
-.art{display:grid;grid-template-columns:74px 1fr;gap:0;border-bottom:1px solid var(--line);position:relative}
-.art.off{opacity:.42}
-.stamp{padding:16px 12px 16px 0;text-align:right;border-right:1px solid var(--line);position:relative}
-.stamp .ex{font-family:var(--mono);font-size:12px;color:var(--petrol);font-weight:500}
-.stamp .kind{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:block;margin-top:4px}
-.stamp input{margin-top:10px}
-.art-body{padding:16px 0 16px 18px;min-width:0}
-.art-head{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
-.role{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:2px;background:var(--paper2);border:1px solid var(--line);color:var(--ink)}
-.role select{border:0;background:transparent;font-family:var(--mono);font-size:11px;color:var(--ink)}
-.note{flex:1;min-width:180px;border:0;border-bottom:1px dotted var(--line);background:transparent;font-size:13px;padding:2px 0;font-family:var(--sans);color:var(--ink)}
-.note:focus{outline:0;border-bottom-color:var(--ochre)}
-.code{font-family:var(--mono);font-size:11.5px;color:#9FB7BD;background:var(--ink);padding:9px 12px;border-radius:2px;white-space:pre-wrap;overflow-x:auto;max-height:110px;margin:0 0 8px}
-.out{font-family:var(--mono);font-size:11.5px;background:var(--paper2);border-left:2px solid var(--ochre);padding:9px 12px;white-space:pre-wrap;overflow-x:auto;max-height:220px;margin:0}
-.out img{max-width:100%;display:block}
-.out table{border-collapse:collapse;font-size:11px}
-.out table td,.out table th{border:1px solid var(--line);padding:2px 6px;text-align:right}
-.out table th{background:var(--paper3);font-weight:600}
-.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:14px 0 20px}
-
-/* ---------- ajustes ---------- */
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:16px 20px}
-.f label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
-.f select,.f input[type=text],.f input[type=number],.f textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r);background:#fff;font-family:var(--sans);font-size:14px;color:var(--ink)}
-.f textarea{min-height:74px;resize:vertical}
-.f select:focus,.f input:focus,.f textarea:focus{outline:0;border-color:var(--petrol)}
-.chk{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;margin-bottom:8px}
-.chk input{margin-top:3px}
-
-/* ---------- manuscrito ---------- */
-.ms{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:34px 40px;max-width:80ch;box-shadow:0 1px 0 var(--paper3)}
-.ms h3{font-family:var(--serif);font-size:20px;margin:0 0 16px;font-weight:600}
-.ms h4{font-family:var(--sans);font-size:14px;text-transform:none;font-weight:600;margin:22px 0 6px;color:var(--ink2)}
-.ms p{font-family:var(--serif);font-size:15.5px;line-height:1.75;margin:0 0 12px;text-align:justify}
-.ms p:focus{outline:1px dashed var(--ochre);outline-offset:6px}
-.tblbox{margin:22px 0}
-.tblcap{font-family:var(--sans);font-size:13px;margin-bottom:6px}
-.tblcap b{font-weight:600}
-.tblbox table{border-collapse:collapse;width:100%;font-family:var(--mono);font-size:11.5px}
-.tblbox td,.tblbox th{border-top:1px solid var(--ink);border-bottom:1px solid var(--line);padding:4px 8px;text-align:right}
-.tblbox th{border-bottom:1px solid var(--ink);font-weight:600;background:transparent}
-.tblnote{font-size:12px;color:var(--muted);margin-top:5px;font-family:var(--sans)}
-.figbox{margin:22px 0}
-.figbox img{max-width:100%;border:1px solid var(--line)}
-mark.unv{background:var(--ochre-l);border-bottom:1.5px solid var(--ochre);padding:0 1px;cursor:help}
-mark.ok{background:transparent}
-
-.panel{background:var(--paper2);border:1px solid var(--line);border-left:3px solid var(--ochre);padding:14px 16px;border-radius:var(--r);margin-bottom:18px}
-.panel h4{margin:0 0 6px;font-size:13px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ochre)}
-.panel ul{margin:0;padding-left:18px;font-size:13.5px}
-.panel.good{border-left-color:var(--petrol)}
-.panel.good h4{color:var(--petrol)}
-
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.status{font-family:var(--mono);font-size:12px;color:var(--muted)}
-.spin{display:inline-block;width:11px;height:11px;border:2px solid var(--line);border-top-color:var(--petrol);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px;margin-right:6px}
-@keyframes sp{to{transform:rotate(360deg)}}
-
-/* ---------- modal ---------- */
-.mask{position:fixed;inset:0;background:rgba(18,34,43,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
-.mask.on{display:flex}
-.modal{background:var(--paper);border-radius:var(--r);max-width:620px;width:100%;max-height:86vh;overflow:auto;padding:26px 28px;border:1px solid var(--line)}
-.modal h3{font-family:var(--serif);font-size:20px;margin:0 0 4px;font-weight:600}
-.modal .close{float:right;background:none;border:0;font-size:22px;cursor:pointer;color:var(--muted);line-height:1}
-pre.ev{font-family:var(--mono);font-size:11px;white-space:pre-wrap;background:var(--ink);color:#B7CCD1;padding:14px;border-radius:2px;max-height:52vh;overflow:auto}
-.hint{font-size:12.5px;color:var(--muted);margin-top:6px}
-.pill{display:inline-block;font-family:var(--mono);font-size:10.5px;padding:2px 7px;border:1px solid var(--line);border-radius:99px;color:var(--muted);margin-right:6px}
-
-footer{border-top:1px solid var(--line);padding:22px 20px;text-align:center;font-size:12px;color:var(--muted);font-family:var(--mono)}
-
-@media(max-width:720px){
-  .ms{padding:22px 20px}
-  .art{grid-template-columns:56px 1fr}
-  .top-in{gap:10px}
-  main{padding:20px 14px 70px}
+html,body{height:100%}
+body{
+  margin:0;background:var(--canvas);color:var(--ink);
+  font-family:var(--sans);font-size:15px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
 }
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- barra superior ---------- */
+.top{
+  position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:14px;
+  padding:0 16px;height:56px;background:var(--paper);border-bottom:1px solid var(--rule);
+}
+.mark{display:flex;align-items:baseline;gap:8px;font-weight:600;letter-spacing:-.01em}
+.mark b{font-family:var(--serif);font-size:20px;font-weight:600}
+.mark span{color:var(--ink-3);font-size:12px}
+.docname{
+  flex:1;min-width:0;font-size:14px;color:var(--ink-2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.btn{
+  border:1px solid var(--rule);background:var(--paper);border-radius:6px;
+  padding:7px 12px;font-size:13.5px;font-weight:500;color:var(--ink);
+}
+.btn:hover{background:#F5F7FA}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:#16358A}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--ink-2)}
+.btn.ghost:hover{background:#F0F3F7;color:var(--ink)}
+.btn.sm{padding:4px 9px;font-size:12.5px}
+
+/* ---------- progreso ---------- */
+.progress{display:none;flex-direction:column;gap:4px;min-width:230px}
+.progress.on{display:flex}
+.progress .bar{height:4px;background:var(--rule-soft);border-radius:2px;overflow:hidden}
+.progress .bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .25s ease}
+.progress small{font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+
+/* ---------- estructura ---------- */
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 18px 400px;height:calc(100vh - 56px)}
+.docpane{overflow:auto;padding:28px 0 120px}
+.sheet{
+  max-width:760px;margin:0 auto;background:var(--paper);
+  border:1px solid var(--rule);border-radius:2px;box-shadow:var(--shadow);
+  padding:56px 64px 72px;
+}
+.sheet h1,.sheet h2,.sheet h3{font-family:var(--serif);font-weight:600;line-height:1.25;margin:2em 0 .6em}
+.sheet h1{font-size:27px;margin-top:0}
+.sheet h2{font-size:21px}
+.sheet h3{font-size:17.5px}
+.sheet p{
+  font-family:var(--serif);font-size:17px;line-height:1.68;margin:0 0 1.05em;
+  max-width:68ch;hyphens:auto;
+}
+.sheet p.tabular{font-family:var(--sans);font-size:14px;line-height:1.5;white-space:pre-wrap;color:var(--ink-2)}
+
+/* marcas sobre el texto */
+mark.f{
+  background:transparent;color:inherit;cursor:pointer;
+  border-bottom:2px solid var(--baja);padding-bottom:1px;
+}
+mark.f.s-alta{border-color:var(--alta);background:var(--alta-bg)}
+mark.f.s-media{border-color:var(--media);background:var(--media-bg)}
+mark.f.s-baja{border-color:var(--baja);background:var(--baja-bg)}
+mark.f.done{border-style:dotted;background:transparent;color:var(--ink-3)}
+mark.f.dropped{border:none;background:transparent;color:inherit;text-decoration:none}
+mark.f.active{box-shadow:0 0 0 3px var(--accent-soft);border-radius:2px}
+
+/* ---------- espina / minimapa ---------- */
+.spine{position:relative;background:var(--canvas);border-left:1px solid var(--rule-soft)}
+.spine .tick{
+  position:absolute;left:3px;width:12px;height:3px;border-radius:1px;cursor:pointer;
+  background:var(--baja);
+}
+.spine .tick.s-alta{background:var(--alta)}
+.spine .tick.s-media{background:var(--media)}
+.spine .tick.done{opacity:.28}
+.spine .view{position:absolute;left:0;width:18px;background:rgba(27,63,160,.10);pointer-events:none}
+
+/* ---------- panel de comentarios ---------- */
+.side{background:var(--paper);border-left:1px solid var(--rule);display:flex;flex-direction:column;min-width:0}
+.side header{padding:14px 16px 10px;border-bottom:1px solid var(--rule-soft)}
+.tally{display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
+.tally b{font-family:var(--serif);font-size:30px;font-weight:600;line-height:1}
+.tally span{font-size:13px;color:var(--ink-2)}
+.filters{display:flex;flex-wrap:wrap;gap:6px}
+.chip{
+  border:1px solid var(--rule);background:var(--paper);border-radius:999px;
+  padding:3px 10px;font-size:12.5px;color:var(--ink-2);
+}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.list{flex:1;overflow:auto;padding:10px 12px 60px}
+.card{
+  border:1px solid var(--rule);border-left:3px solid var(--baja);border-radius:5px;
+  padding:11px 12px;margin-bottom:9px;background:var(--paper);
+}
+.card.s-alta{border-left-color:var(--alta)}
+.card.s-media{border-left-color:var(--media)}
+.card.active{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.card.st-hecho,.card.st-descartado{opacity:.5}
+.card .meta{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11.5px;color:var(--ink-3)}
+.card .meta .cat{color:var(--ink-2);font-weight:500}
+.card .meta .sev{padding:1px 6px;border-radius:3px;font-weight:500}
+.card .meta .sev.alta{background:var(--alta-bg);color:var(--alta)}
+.card .meta .sev.media{background:var(--media-bg);color:var(--media)}
+.card .meta .sev.baja{background:var(--baja-bg);color:var(--baja)}
+.card h4{margin:0 0 5px;font-size:14px;font-weight:600;line-height:1.35}
+.card blockquote{
+  margin:0 0 7px;padding-left:9px;border-left:2px solid var(--rule);
+  font-family:var(--serif);font-size:14px;color:var(--ink-2);font-style:italic;
+}
+.card p{margin:0 0 6px;font-size:13.5px;color:var(--ink-2);line-height:1.55}
+.card .fix{background:#F6F8FB;border-radius:4px;padding:7px 9px;font-size:13px;color:var(--ink-2)}
+.card .fix strong{color:var(--ink);font-weight:500}
+.card .acts{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+.card .unanchored{font-size:11.5px;color:var(--ink-3)}
+
+.empty{padding:44px 22px;text-align:center;color:var(--ink-2)}
+.empty h3{font-family:var(--serif);font-size:19px;font-weight:600;margin:0 0 8px;color:var(--ink)}
+.empty p{font-size:13.5px;margin:0 0 14px;line-height:1.55}
+
+/* ---------- pantalla de inicio ---------- */
+.start{max-width:760px;margin:0 auto;padding:0 8px}
+.start .hero{
+  background:var(--paper);border:1px solid var(--rule);border-radius:2px;box-shadow:var(--shadow);
+  padding:52px 56px 44px;
+}
+.start .hero h1{font-family:var(--serif);font-size:34px;line-height:1.15;font-weight:600;margin:0 0 12px;max-width:20ch}
+.start .hero .lede{font-family:var(--serif);font-size:18px;line-height:1.6;color:var(--ink-2);max-width:60ch;margin:0 0 26px}
+.drop{
+  border:1px dashed var(--rule);border-radius:6px;padding:26px;text-align:center;color:var(--ink-2);
+  background:#FAFBFD;
+}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop p{margin:0 0 12px;font-size:13.5px}
+.paste{width:100%;min-height:150px;border:1px solid var(--rule);border-radius:6px;padding:12px;
+  font-family:var(--serif);font-size:15px;line-height:1.6;resize:vertical;margin-top:14px}
+.lenses{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+.lens{display:flex;gap:9px;align-items:flex-start;border:1px solid var(--rule);border-radius:6px;padding:9px 11px}
+.lens input{margin:3px 0 0}
+.lens b{display:block;font-size:13.5px;font-weight:500}
+.lens small{color:var(--ink-3);font-size:12px;line-height:1.4;display:block}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12px;color:var(--ink-3)}
+.field select,.field input{border:1px solid var(--rule);border-radius:6px;padding:7px 9px;background:var(--paper)}
+.estimate{font-size:12.5px;color:var(--ink-3);margin-top:12px;font-variant-numeric:tabular-nums}
+.recent{margin-top:22px}
+.recent h3{font-size:13px;font-weight:500;color:var(--ink-3);margin:0 0 8px}
+.recent a{display:flex;justify-content:space-between;gap:12px;padding:9px 12px;background:var(--paper);
+  border:1px solid var(--rule);border-radius:5px;margin-bottom:6px;text-decoration:none;color:var(--ink);font-size:13.5px}
+.recent a:hover{border-color:var(--accent)}
+.recent a span{color:var(--ink-3);font-size:12px;white-space:nowrap}
+
+/* ---------- modales ---------- */
+dialog{
+  border:1px solid var(--rule);border-radius:8px;padding:0;max-width:560px;width:calc(100% - 32px);
+  box-shadow:0 18px 50px rgba(18,22,28,.22);color:var(--ink);background:var(--paper);
+}
+dialog::backdrop{background:rgba(18,22,28,.42)}
+dialog .dh{padding:16px 20px 12px;border-bottom:1px solid var(--rule-soft);display:flex;justify-content:space-between;align-items:center}
+dialog .dh h2{margin:0;font-family:var(--serif);font-size:19px;font-weight:600}
+dialog .db{padding:18px 20px;max-height:66vh;overflow:auto}
+dialog .df{padding:12px 20px;border-top:1px solid var(--rule-soft);display:flex;justify-content:flex-end;gap:8px}
+dialog label.f{display:block;margin-bottom:14px}
+dialog label.f span{display:block;font-size:12.5px;color:var(--ink-2);margin-bottom:4px}
+dialog label.f input,dialog label.f select,dialog label.f textarea{
+  width:100%;border:1px solid var(--rule);border-radius:6px;padding:8px 10px;background:var(--paper)}
+dialog small.hint{display:block;color:var(--ink-3);font-size:12px;margin-top:4px;line-height:1.45}
+
+
+/* ---------- resolver comentario (evidencia + corrección) ---------- */
+#dlgFix{max-width:760px}
+.fixhead{border:1px solid var(--rule-soft);background:#F6F8FB;border-radius:6px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:var(--ink-2)}
+.fixhead b{display:block;color:var(--ink);font-size:14px;font-weight:600;margin-bottom:4px}
+.fixhead blockquote{margin:6px 0 0;padding-left:9px;border-left:2px solid var(--rule);font-family:var(--serif);font-style:italic}
+.fixdiff{font-family:var(--serif);font-size:14px;line-height:1.6;background:var(--paper);border:1px solid var(--rule);
+  border-radius:6px;padding:10px 12px;max-height:230px;overflow:auto;white-space:pre-wrap;margin-bottom:14px}
+.fixdiff ins{background:#E1F1E6;color:var(--ok);text-decoration:none}
+.fixdiff del{background:#FBE9E9;color:var(--alta)}
+.srcs{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
+.src{border:1px solid var(--rule);border-radius:6px;padding:8px 10px;font-size:12.5px;color:var(--ink-2);display:flex;gap:9px;align-items:flex-start}
+.src input{margin:3px 0 0}
+.src b{display:block;color:var(--ink);font-weight:500;font-size:13px;line-height:1.35}
+.src span.tag{display:inline-block;font-size:11px;color:var(--ink-3);margin-right:6px}
+.src a{color:var(--accent);word-break:break-all}
+.card .fix.done{background:#EDF6F0}
+.card .fix.done strong{color:var(--ok)}
+.card .refs{margin:5px 0 0;padding-left:16px;font-size:12px;color:var(--ink-3)}
+.card .refs li{margin-bottom:2px}
+.card.st-hecho.applied{opacity:.72}
+.busy{font-size:12.5px;color:var(--ink-3)}
+
+/* ---------- chat ---------- */
+.chatlog{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+.msg{padding:9px 11px;border-radius:7px;font-size:13.5px;line-height:1.55;max-width:92%}
+.msg.u{align-self:flex-end;background:var(--accent-soft)}
+.msg.a{align-self:flex-start;background:#F4F6F9;white-space:pre-wrap}
+
+.log{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--ink-3);
+  background:#F6F8FA;border:1px solid var(--rule-soft);border-radius:5px;padding:9px;max-height:180px;overflow:auto;white-space:pre-wrap}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;
+  padding:9px 15px;border-radius:6px;font-size:13.5px;z-index:90;box-shadow:var(--shadow)}
+
+.tabs{display:none;gap:6px;padding:8px 12px;background:var(--paper);border-bottom:1px solid var(--rule)}
+@media (max-width:1000px){
+  .wrap{grid-template-columns:1fr;grid-template-rows:1fr}
+  .spine{display:none}
+  .side{border-left:none;border-top:1px solid var(--rule);display:none}
+  body.view-side .side{display:flex}
+  body.view-side .docpane{display:none}
+  .tabs{display:flex}
+  .sheet{padding:32px 22px 44px}
+  .start .hero{padding:32px 22px}
+  .lenses{grid-template-columns:1fr}
+}
+@media print{
+  .top,.side,.spine,.tabs{display:none}
+  .wrap{display:block;height:auto}
+  .sheet{box-shadow:none;border:none}
+}
 </style>
 </head>
 <body>
 
 <header class="top">
-  <div class="top-in">
-    <div>
-      <div class="brand">Narrativ<em>IA</em></div>
-      <div class="brand-sub">del cuaderno ejecutado a la sección de resultados</div>
-    </div>
-    <div class="sp"></div>
-    <button class="tbtn" id="btnProj">Proyectos</button>
-    <button class="tbtn" id="btnCfg">Modelo y clave</button>
+  <div class="mark"><b>RefinIA</b><span>verificación de manuscritos</span></div>
+  <div class="docname" id="docname"></div>
+  <div class="progress" id="progress">
+    <div class="bar"><i id="pbar"></i></div>
+    <small id="ptext"></small>
   </div>
+  <button class="btn ghost" id="btnCancel" style="display:none">Detener</button>
+  <button class="btn ghost" id="btnRevision" style="display:none">Comparar revisión</button>
+  <button class="btn ghost" id="btnUndo" style="display:none">Deshacer cambio</button>
+  <button class="btn ghost" id="btnExport" style="display:none">Exportar</button>
+  <button class="btn ghost" id="btnSettings">Ajustes</button>
+  <button class="btn" id="btnNew">Nuevo documento</button>
 </header>
 
-<nav class="steps" id="steps">
-  <button class="step act" data-go="s1"><b>1</b> Cuaderno</button>
-  <button class="step" data-go="s2"><b>2</b> Evidencia</button>
-  <button class="step" data-go="s3"><b>3</b> Estilo</button>
-  <button class="step" data-go="s4"><b>4</b> Resultados</button>
-</nav>
+<div class="tabs">
+  <button class="chip" id="tabDoc" aria-pressed="true">Documento</button>
+  <button class="chip" id="tabSide" aria-pressed="false">Comentarios</button>
+</div>
 
-<main>
+<div class="wrap">
+  <div class="docpane" id="docpane">
+    <div class="start" id="start">
+      <div class="hero">
+        <h1>Comprueba tu manuscrito antes de que lo haga un revisor</h1>
+        <p class="lede">RefinIA lee el documento pasaje a pasaje con varias lentes de revisión en paralelo, contrasta lo que dices en un sitio con lo que dices en otro, y devuelve sólo los comentarios que harían dudar a un evaluador.</p>
 
-<!-- 1 -->
-<section class="blk" id="s1">
-  <h2 class="sec">Carga el cuaderno ejecutado</h2>
-  <p class="lead">NarrativIA lee el <code>.ipynb</code> con sus salidas guardadas: tablas de pandas, figuras de matplotlib, resúmenes de statsmodels o scipy. No vuelve a ejecutar nada ni recalcula: solo redacta a partir de lo que el cuaderno ya imprimió.</p>
+        <div class="drop" id="drop">
+          <p>Arrastra aquí un PDF, un DOCX o un archivo de texto</p>
+          <button class="btn" id="btnFile">Elegir archivo</button>
+          <input type="file" id="file" accept=".pdf,.docx,.txt,.md,.tex" hidden>
+        </div>
+        <textarea class="paste" id="paste" placeholder="…o pega aquí el texto del manuscrito"></textarea>
 
-  <div class="drop" id="drop">
-    <h3>Suelta aquí tu .ipynb</h3>
-    <p>En Colab: Archivo → Descargar → Descargar .ipynb. Guarda el cuaderno con las salidas visibles antes de descargarlo.</p>
-    <button class="btn" id="btnFile">Elegir cuaderno</button>
-    <input type="file" id="file" accept=".ipynb,application/json" hidden>
-  </div>
+        <div class="lenses" id="lenses"></div>
 
-  <div id="nbInfo" style="display:none;margin-top:18px"></div>
-</section>
-
-<!-- 2 -->
-<section class="blk" id="s2" style="display:none">
-  <h2 class="sec">Elige qué entra en Resultados</h2>
-  <p class="lead">Cada salida lleva su número de ejecución del cuaderno, que es el orden real del análisis. Marca lo que debe aparecer, corrige el papel que juega y añade una nota si el modelo necesita saber algo que el código no dice.</p>
-
-  <div class="tools">
-    <button class="btn ghost sm" id="selAll">Marcar todo</button>
-    <button class="btn ghost sm" id="selNone">Desmarcar todo</button>
-    <button class="btn ghost sm" id="selRel">Solo tablas, figuras y contrastes</button>
-    <span class="status" id="selCount"></span>
-  </div>
-
-  <div class="inv" id="inv"></div>
-
-  <div class="row" style="margin-top:20px">
-    <button class="btn" id="toS3">Continuar al estilo</button>
-  </div>
-</section>
-
-<!-- 3 -->
-<section class="blk" id="s3" style="display:none">
-  <h2 class="sec">Estilo de redacción</h2>
-  <p class="lead">Estas decisiones cambian el texto, no los datos. Las tablas se construyen con los valores exactos del cuaderno; el modelo solo escribe la prosa, los títulos y las leyendas.</p>
-
-  <div class="grid">
-    <div class="f"><label>Idioma del manuscrito</label>
-      <select id="cLang"><option value="es">Español</option><option value="en">Inglés</option><option value="ca">Valenciano / catalán</option></select></div>
-    <div class="f"><label>Norma de estilo</label>
-      <select id="cStyle">
-        <option value="APA7">APA 7ª edición</option>
-        <option value="Vancouver">Vancouver (biomédicas)</option>
-        <option value="AMA">AMA</option>
-        <option value="Elsevier">Genérico Elsevier / Springer</option>
-      </select></div>
-    <div class="f"><label>Revista objetivo (opcional)</label>
-      <input type="text" id="cJournal" placeholder="p. ej. BMC Pregnancy and Childbirth"></div>
-    <div class="f"><label>Extensión</label>
-      <select id="cLen"><option value="compacta">Compacta (~350 palabras)</option><option value="media" selected>Media (~700 palabras)</option><option value="extensa">Extensa (~1200 palabras)</option></select></div>
-    <div class="f"><label>Primera tabla numerada como</label><input type="number" id="cT0" value="1" min="1"></div>
-    <div class="f"><label>Primera figura numerada como</label><input type="number" id="cF0" value="1" min="1"></div>
-  </div>
-
-  <div style="margin-top:20px" class="grid">
-    <div>
-      <div class="chk"><input type="checkbox" id="cMethods" checked><label style="font-family:var(--sans);text-transform:none;letter-spacing:0;font-size:13.5px;color:var(--ink)">Redactar también el párrafo de «Análisis estadístico» para Métodos</label></div>
-      <div class="chk"><input type="checkbox" id="cCI" checked><label style="font-family:var(--sans);text-transform:none;letter-spacing:0;font-size:13.5px;color:var(--ink)">Exigir intervalos de confianza y tamaños del efecto cuando existan en las salidas</label></div>
-      <div class="chk"><input type="checkbox" id="cVision"><label style="font-family:var(--sans);text-transform:none;letter-spacing:0;font-size:13.5px;color:var(--ink)">Enviar las imágenes de las figuras al modelo para redactar sus leyendas (requiere modelo con visión)</label></div>
+        <div class="row">
+          <div class="field">
+            <label for="depth">Profundidad</label>
+            <select id="depth">
+              <option value="rapida">Rápida · una pasada, sin verificación</option>
+              <option value="estandar" selected>Estándar · todas las lentes + verificación</option>
+              <option value="profunda">Profunda · doble muestreo y corroboración</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="lang">Idioma de los comentarios</label>
+            <select id="lang">
+              <option value="auto">El del documento</option>
+              <option value="es">Español</option>
+              <option value="en">Inglés</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="ctx">Contexto (opcional)</label>
+            <input id="ctx" placeholder="revista, disciplina, tipo de trabajo" style="width:230px">
+          </div>
+        </div>
+        <div class="estimate" id="estimate"></div>
+        <div class="row">
+          <button class="btn primary" id="btnRun" disabled>Revisar documento</button>
+          <span class="estimate" id="keywarn"></span>
+        </div>
+      </div>
+      <div class="recent" id="recent"></div>
     </div>
-    <div class="f"><label>Contexto del estudio</label>
-      <textarea id="cCtx" placeholder="Diseño, población, variable principal, hipótesis. Dos o tres frases bastan y mejoran mucho el resultado."></textarea></div>
+    <div id="sheetHost"></div>
   </div>
 
-  <div class="row" style="margin-top:22px">
-    <button class="btn ochre" id="btnGen">Redactar Resultados</button>
-    <button class="btn ghost" id="btnEv">Ver la evidencia que se envía</button>
-    <span class="status" id="genStat"></span>
+  <div class="spine" id="spine"></div>
+
+  <aside class="side" id="side">
+    <header>
+      <div class="tally"><b id="tallyN">0</b><span id="tallyT">comentarios</span></div>
+      <div class="filters" id="filters"></div>
+    </header>
+    <div class="list" id="list">
+      <div class="empty">
+        <h3>Todavía no hay revisión</h3>
+        <p>Carga un manuscrito y ejecuta la revisión. Los comentarios aparecerán aquí, anclados al punto exacto del texto.</p>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<dialog id="dlgSettings">
+  <div class="dh"><h2>Ajustes</h2><button class="btn ghost sm" data-close>Cerrar</button></div>
+  <div class="db">
+    <label class="f"><span>Clave de API de OpenAI</span>
+      <input type="password" id="sKey" placeholder="sk-…" autocomplete="off">
+      <small class="hint">Se guarda sólo en este navegador (localStorage, clave <code>ia_openai_key</code>). Las peticiones van directamente de tu navegador a OpenAI: no hay servidor intermedio.</small>
+    </label>
+    <label class="f"><span>Modelo</span><input id="sModel" placeholder="gpt-4o-mini"></label>
+    <label class="f"><span>URL base de la API</span><input id="sBase" placeholder="https://api.openai.com/v1"></label>
+    <label class="f"><span>Peticiones en paralelo</span><input id="sConc" type="number" min="1" max="16"></label>
+    <label class="f"><span>Palabras por pasaje</span>
+      <input id="sChunk" type="number" min="200" max="2000" step="50">
+      <small class="hint">Pasajes más cortos dan comentarios más finos y más llamadas; más largos ven mejor el hilo del argumento.</small>
+    </label>
+    <label class="f"><span>Umbral de confianza para publicar un comentario</span>
+      <input id="sConf" type="number" min="0" max="1" step="0.05">
+    </label>
+    <label class="f"><span>Evidencia externa al resolver un comentario</span>
+      <select id="sEnrich">
+        <option value="openalex">OpenAlex · literatura académica (sin clave)</option>
+        <option value="tavily">Tavily · búsqueda web (requiere clave)</option>
+        <option value="ambas">Ambas</option>
+        <option value="off">Ninguna · resolver sólo con el texto del manuscrito</option>
+      </select>
+      <small class="hint">Antes de reescribir el pasaje, RefinIA busca fuentes que respalden la corrección. Sólo puede citar lo que aparezca en esos resultados.</small>
+    </label>
+    <label class="f"><span>Correo para el «polite pool» de OpenAlex (opcional)</span>
+      <input id="sMail" placeholder="tu@universidad.es" autocomplete="off">
+      <small class="hint">OpenAlex da prioridad a las peticiones que se identifican con un correo. No se envía a ningún otro sitio.</small>
+    </label>
+    <label class="f"><span>Clave de API de Tavily (opcional)</span>
+      <input type="password" id="sTavily" placeholder="tvly-…" autocomplete="off">
+      <small class="hint">Se guarda sólo en este navegador (<code>ia_tavily_key</code>). Si Tavily bloquea la petición desde el navegador (CORS), usa OpenAlex.</small>
+    </label>
   </div>
-</section>
+  <div class="df"><button class="btn" data-close>Cancelar</button><button class="btn primary" id="sSave">Guardar ajustes</button></div>
+</dialog>
 
-<!-- 4 -->
-<section class="blk" id="s4" style="display:none">
-  <h2 class="sec">Manuscrito</h2>
-  <p class="lead">Texto editable. Cada cifra se ha contrastado con las salidas del cuaderno: las que no aparecen en ninguna salida quedan subrayadas en ocre para que las revises antes de enviar nada.</p>
-
-  <div id="audit"></div>
-  <div id="gaps"></div>
-
-  <div class="row" style="margin-bottom:16px">
-    <button class="btn" id="expDocx">Descargar .docx</button>
-    <button class="btn ghost" id="expMd">Descargar .md</button>
-    <button class="btn ghost" id="copyTxt">Copiar texto</button>
-    <button class="btn ghost" id="reAudit">Reauditar cifras</button>
-    <button class="btn ghost" id="btnSave">Guardar proyecto</button>
+<dialog id="dlgChat">
+  <div class="dh"><h2>Preguntar sobre este comentario</h2><button class="btn ghost sm" data-close>Cerrar</button></div>
+  <div class="db">
+    <div class="chatlog" id="chatlog"></div>
+    <label class="f"><span>Tu pregunta</span><textarea id="chatIn" rows="3" placeholder="¿Por qué es un problema? ¿Cómo lo reescribirías?"></textarea></label>
   </div>
+  <div class="df"><button class="btn" data-close>Cerrar</button><button class="btn primary" id="chatSend">Enviar</button></div>
+</dialog>
 
-  <div class="ms" id="ms"></div>
-</section>
-
-</main>
-
-<footer>NarrativIA · Fernando Borrás · Universidad Miguel Hernández de Elche · la clave se guarda solo en este navegador</footer>
-
-<!-- modal ajustes -->
-<div class="mask" id="mCfg"><div class="modal">
-  <button class="close" data-x>&times;</button>
-  <h3>Modelo y clave</h3>
-  <p class="hint">La clave se guarda en <code>localStorage</code> de este navegador con el nombre <code>ia_openai_key</code> y no viaja a ningún servidor propio.</p>
-  <div class="grid" style="margin-top:16px">
-    <div class="f"><label>Proveedor</label>
-      <select id="pProv"><option value="openai">OpenAI</option><option value="ollama">Ollama local</option></select></div>
-    <div class="f"><label>Modelo</label><input type="text" id="pModel" placeholder="gpt-4o"></div>
-    <div class="f" style="grid-column:1/-1"><label>Clave API (solo OpenAI)</label><input type="text" id="pKey" placeholder="sk-..."></div>
-    <div class="f" style="grid-column:1/-1"><label>URL base (solo Ollama)</label><input type="text" id="pUrl" placeholder="http://localhost:11434"></div>
+<dialog id="dlgFix">
+  <div class="dh"><h2>Resolver el comentario en el documento</h2><button class="btn ghost sm" data-close>Cerrar</button></div>
+  <div class="db">
+    <div class="fixhead" id="fixHead"></div>
+    <div id="fixSrcBox"></div>
+    <div class="fixdiff" id="fixDiff"></div>
+    <label class="f"><span>Texto que sustituirá al pasaje (puedes editarlo antes de aplicar)</span>
+      <textarea id="fixText" rows="9" style="font-family:var(--serif);font-size:14.5px;line-height:1.6"></textarea>
+    </label>
+    <div class="busy" id="fixNote"></div>
   </div>
-  <div class="row" style="margin-top:18px"><button class="btn" id="pSave">Guardar</button><span class="status" id="pStat"></span></div>
-</div></div>
+  <div class="df">
+    <button class="btn" id="fixSearch">Buscar evidencia</button>
+    <button class="btn" id="fixRegen">Regenerar propuesta</button>
+    <button class="btn" data-close>Cancelar</button>
+    <button class="btn primary" id="fixApply">Aplicar y marcar resuelto</button>
+  </div>
+</dialog>
 
-<!-- modal evidencia -->
-<div class="mask" id="mEv"><div class="modal">
-  <button class="close" data-x>&times;</button>
-  <h3>Evidencia enviada al modelo</h3>
-  <p class="hint">Esto es literalmente lo que ve el modelo. Si un dato no está aquí, no puede aparecer en el texto.</p>
-  <pre class="ev" id="evTxt"></pre>
-</div></div>
+<dialog id="dlgExport">
+  <div class="dh"><h2>Exportar la revisión</h2><button class="btn ghost sm" data-close>Cerrar</button></div>
+  <div class="db">
+    <p style="margin:0 0 14px;color:var(--ink-2);font-size:13.5px">Se exportan los comentarios visibles con el filtro actual.</p>
+    <div class="row" style="margin:0">
+      <button class="btn" data-exp="md">Informe en Markdown</button>
+      <button class="btn" data-exp="doc">Informe en Word</button>
+      <button class="btn" data-exp="json">Datos en JSON</button>
+      <button class="btn" data-exp="letter">Borrador de carta de respuesta</button>
+      <button class="btn" data-exp="clean">Manuscrito con los cambios aplicados</button>
+      <button class="btn" data-exp="changes">Registro de cambios aplicados</button>
+    </div>
+  </div>
+  <div class="df"><button class="btn" data-close>Cerrar</button></div>
+</dialog>
 
-<!-- modal proyectos -->
-<div class="mask" id="mProj"><div class="modal">
-  <button class="close" data-x>&times;</button>
-  <h3>Proyectos guardados</h3>
-  <p class="hint">Se guardan en IndexedDB, en este navegador.</p>
-  <div id="projList" style="margin-top:14px"></div>
-</div></div>
+<dialog id="dlgRevision">
+  <div class="dh"><h2>Comparar con la versión revisada</h2><button class="btn ghost sm" data-close>Cerrar</button></div>
+  <div class="db">
+    <p style="margin:0 0 14px;color:var(--ink-2);font-size:13.5px">Carga la nueva versión del manuscrito y RefinIA comprobará, comentario a comentario, si el problema sigue ahí.</p>
+    <div class="drop" id="drop2">
+      <p>Arrastra aquí la versión revisada</p>
+      <button class="btn" id="btnFile2">Elegir archivo</button>
+      <input type="file" id="file2" accept=".pdf,.docx,.txt,.md,.tex" hidden>
+    </div>
+    <div class="log" id="revLog" style="margin-top:12px;display:none"></div>
+  </div>
+  <div class="df"><button class="btn" data-close>Cerrar</button><button class="btn primary" id="revRun" disabled>Comprobar cambios</button></div>
+</dialog>
 
 <script>
-"use strict";
 /* ============================================================
-   NarrativIA — estado
-============================================================ */
-const S = { nbName:"", nbCells:0, artifacts:[], result:null, evidence:"", srcNums:[], projectId:null };
+   RefinIA — verificación de manuscritos con OpenAI (gpt-4o-mini)
+   Fichero único, sin servidor. Fernando Borrás Rocher · UMH
+   ============================================================ */
+'use strict';
 
-const $ = s => document.querySelector(s);
-const $$ = s => Array.from(document.querySelectorAll(s));
-const esc = s => String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+/* ---------- utilidades ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Math.random().toString(36).slice(2, 10);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const words = t => (t.trim().match(/\S+/g) || []).length;
+const norm = t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
 
-/* ============================================================
-   Preferencias de modelo
-============================================================ */
-const CFG = {
-  get prov(){ return localStorage.getItem("ia_provider") || "openai"; },
-  get model(){ return localStorage.getItem("ia_model") || "gpt-4o"; },
-  get key(){ return localStorage.getItem("ia_openai_key") || ""; },
-  get url(){ return localStorage.getItem("ia_ollama_url") || "http://localhost:11434"; }
+function toast(msg, ms = 2600) {
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg; document.body.appendChild(t);
+  setTimeout(() => t.remove(), ms);
+}
+
+/* ---------- ajustes ---------- */
+const DEF = {
+  model: 'gpt-4o-mini',
+  base: 'https://api.openai.com/v1',
+  conc: 6,
+  chunkWords: 850,
+  minConf: 0.55,
+  enrich: 'openalex',
+  mailto: ''
 };
-function loadCfgUI(){
-  $("#pProv").value = CFG.prov; $("#pModel").value = CFG.model;
-  $("#pKey").value = CFG.key; $("#pUrl").value = CFG.url;
-}
-$("#pSave").onclick = () => {
-  localStorage.setItem("ia_provider", $("#pProv").value);
-  localStorage.setItem("ia_model", $("#pModel").value.trim() || "gpt-4o");
-  localStorage.setItem("ia_openai_key", $("#pKey").value.trim());
-  localStorage.setItem("ia_ollama_url", $("#pUrl").value.trim() || "http://localhost:11434");
-  $("#pStat").textContent = "Guardado.";
-  setTimeout(()=>{ $("#pStat").textContent=""; $("#mCfg").classList.remove("on"); }, 700);
+const S = {
+  get key() { return localStorage.getItem('ia_openai_key') || ''; },
+  set key(v) { v ? localStorage.setItem('ia_openai_key', v) : localStorage.removeItem('ia_openai_key'); },
+  get tavily() { return localStorage.getItem('ia_tavily_key') || ''; },
+  set tavily(v) { v ? localStorage.setItem('ia_tavily_key', v) : localStorage.removeItem('ia_tavily_key'); },
+  load() {
+    let o = {};
+    try { o = JSON.parse(localStorage.getItem('refinia_settings') || '{}'); } catch (e) {}
+    return Object.assign({}, DEF, o);
+  },
+  save(o) { localStorage.setItem('refinia_settings', JSON.stringify(o)); }
 };
-$("#btnCfg").onclick = () => { loadCfgUI(); $("#mCfg").classList.add("on"); };
-$$(".mask").forEach(m => {
-  m.addEventListener("click", e => { if(e.target===m) m.classList.remove("on"); });
-  const x = m.querySelector("[data-x]"); if(x) x.onclick = () => m.classList.remove("on");
-});
-document.addEventListener("keydown", e => { if(e.key==="Escape") $$(".mask").forEach(m=>m.classList.remove("on")); });
+let cfg = S.load();
 
-/* ============================================================
-   Navegación por pasos
-============================================================ */
-function show(id){
-  ["s1","s2","s3","s4"].forEach(s => { const el=$("#"+s); if(el) el.style.display = (s===id)?"":"none"; });
-  $$(".step").forEach(b => b.classList.toggle("act", b.dataset.go===id));
-  window.scrollTo({top:0,behavior:"smooth"});
-}
-$$(".step").forEach(b => b.onclick = () => {
-  const t = b.dataset.go;
-  if(t!=="s1" && !S.artifacts.length){ alert("Carga primero un cuaderno."); return; }
-  if(t==="s4" && !S.result){ alert("Aún no hay Resultados redactados."); return; }
-  show(t);
-});
-function markDone(id){ const b=$$(".step").find(x=>x.dataset.go===id); if(b) b.classList.add("done"); }
+/* ---------- estado de la sesión ---------- */
+const state = {
+  doc: null,        // {id,name,text,blocks,sections,chunks,createdAt}
+  findings: [],
+  filters: { sev: new Set(), cat: new Set(), estado: 'abiertos' },
+  active: null,
+  running: false,
+  abort: false,
+  edits: [],        // pila de cambios aplicados al texto (deshacer)
+  usage: { in: 0, out: 0, calls: 0 }
+};
 
-/* ============================================================
-   Carga y análisis del .ipynb
-============================================================ */
-const drop = $("#drop");
-$("#btnFile").onclick = () => $("#file").click();
-$("#file").onchange = e => { if(e.target.files[0]) readNb(e.target.files[0]); };
-["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("hot"); }));
-["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("hot"); }));
-drop.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if(f) readNb(f); });
-
-function joinSrc(s){ return Array.isArray(s) ? s.join("") : (s||""); }
-
-function readNb(file){
-  const fr = new FileReader();
-  fr.onload = () => {
-    let nb;
-    try { nb = JSON.parse(fr.result); }
-    catch(err){ alert("Ese archivo no es un .ipynb válido. Descárgalo desde Colab con Archivo → Descargar → .ipynb."); return; }
-    if(!nb.cells){ alert("El archivo no contiene celdas. ¿Seguro que es un cuaderno?"); return; }
-    S.nbName = file.name;
-    parseNb(nb);
-  };
-  fr.readAsText(file);
-}
-
-function parseNb(nb){
-  const arts = [];
-  let mdBuf = [];
-  let n = 0;
-  (nb.cells||[]).forEach((cell, ci) => {
-    if(cell.cell_type === "markdown"){ mdBuf.push(joinSrc(cell.source).trim()); return; }
-    if(cell.cell_type !== "code") return;
-    const code = joinSrc(cell.source).trim();
-    const exec = cell.execution_count;
-    const ctx = mdBuf.slice(-2).join("\n").slice(0,600);
-    (cell.outputs || []).forEach(out => {
-      const d = out.data || {};
-      let kind=null, text="", html="", png=null;
-
-      if(out.output_type === "stream"){
-        text = joinSrc(out.text).trim(); kind = "texto";
-      } else if(out.output_type === "error"){
-        text = (out.traceback||[]).join("\n").replace(/\u001b\[[0-9;]*m/g,"").trim(); kind = "error";
-      } else {
-        if(d["image/png"]){ png = Array.isArray(d["image/png"]) ? d["image/png"].join("") : d["image/png"]; kind="figura"; }
-        else if(d["text/html"] && /<table/i.test(joinSrc(d["text/html"]))){ html = joinSrc(d["text/html"]); kind="tabla"; }
-        else if(d["text/plain"]){ text = joinSrc(d["text/plain"]).trim(); kind="texto"; }
-      }
-      if(!kind) return;
-      if(kind==="texto" && (!text || text.length<2 || /^<(Figure|matplotlib|Axes)/i.test(text))) return;
-
-      const role = guessRole(kind, text, html, code);
-      arts.push({
-        id: "A" + (++n), cell: ci, exec: (exec==null?"·":exec),
-        kind, code, text, html, png, role,
-        note:"", sel: role!=="descartar", ctx,
-        imgW:0, imgH:0
-      });
+/* ---------- almacenamiento (IndexedDB) ---------- */
+const DB = (() => {
+  let db = null;
+  function open() {
+    return new Promise((res, rej) => {
+      if (db) return res(db);
+      const r = indexedDB.open('refinia', 1);
+      r.onupgradeneeded = () => {
+        const d = r.result;
+        if (!d.objectStoreNames.contains('docs')) d.createObjectStore('docs', { keyPath: 'id' });
+      };
+      r.onsuccess = () => { db = r.result; res(db); };
+      r.onerror = () => rej(r.error);
     });
-    mdBuf = [];
-  });
-
-  S.artifacts = arts; S.nbCells = (nb.cells||[]).length; S.result = null;
-  renderNbInfo(); renderInv(); collectSourceNumbers();
-  markDone("s1"); show("s2");
-}
-
-function guessRole(kind, text, html, code){
-  if(kind==="figura") return "figura";
-  if(kind==="tabla") return "tabla";
-  if(kind==="error") return "descartar";
-  const t = (text||"").toLowerCase();
-  if(/p[-\s]?value|pvalue|p =|pvalor|statistic|significan|chi2|ttest|mannwhitney|shapiro|anova|kruskal|wilcoxon/.test(t)) return "contraste";
-  if(/coef|std err|r-squared|odds ratio|logit|ols regression|glm|aic|bic|pseudo r/.test(t)) return "modelo";
-  if(/mean|std|count|median|25%|75%|freq|describe|value_counts/.test(t)) return "descriptivo";
-  if(text && text.split("\n").length>2 && /\d/.test(text)) return "descriptivo";
-  return "auxiliar";
-}
-
-function renderNbInfo(){
-  const c = {};
-  S.artifacts.forEach(a => c[a.kind] = (c[a.kind]||0)+1);
-  $("#nbInfo").style.display = "";
-  $("#nbInfo").innerHTML = `
-    <div class="nbcard">
-      <div>
-        <div class="name">${esc(S.nbName)}</div>
-        <div class="meta">${S.nbCells} celdas · ${S.artifacts.length} salidas recuperadas</div>
-      </div>
-      <div style="flex:1"></div>
-      <div class="stat"><span>Tablas</span><b>${c["tabla"]||0}</b></div>
-      <div class="stat"><span>Figuras</span><b>${c["figura"]||0}</b></div>
-      <div class="stat"><span>Texto</span><b>${c["texto"]||0}</b></div>
-      <div class="stat"><span>Errores</span><b>${c["error"]||0}</b></div>
-    </div>`;
-}
-
-/* ============================================================
-   Inventario
-============================================================ */
-const ROLES = ["descriptivo","contraste","modelo","tabla","figura","auxiliar","descartar"];
-
-function renderInv(){
-  const box = $("#inv");
-  box.innerHTML = S.artifacts.map(a => {
-    let body = "";
-    if(a.png) body = `<div class="out"><img src="data:image/png;base64,${a.png}" alt="Figura del cuaderno" data-img="${a.id}"></div>`;
-    else if(a.html) body = `<div class="out">${sanitizeTable(a.html)}</div>`;
-    else body = `<pre class="out">${esc(clip(a.text, 1600))}</pre>`;
-    return `
-    <div class="art ${a.sel?"":"off"}" data-a="${a.id}">
-      <div class="stamp">
-        <div class="ex">[${a.exec}]</div>
-        <span class="kind">${a.kind}</span>
-        <input type="checkbox" data-sel="${a.id}" ${a.sel?"checked":""} aria-label="Incluir salida ${a.id}">
-      </div>
-      <div class="art-body">
-        <div class="art-head">
-          <span class="role">papel <select data-role="${a.id}">${ROLES.map(r=>`<option ${r===a.role?"selected":""}>${r}</option>`).join("")}</select></span>
-          <input class="note" data-note="${a.id}" value="${esc(a.note)}" placeholder="Nota para el redactor: «este es el modelo principal», «solo la columna ajustada»…">
-        </div>
-        ${a.code ? `<pre class="code">${esc(clip(a.code, 420))}</pre>` : ""}
-        ${body}
-      </div>
-    </div>`;
-  }).join("");
-
-  box.querySelectorAll("[data-sel]").forEach(el => el.onchange = e => {
-    const a = find(e.target.dataset.sel); a.sel = e.target.checked;
-    e.target.closest(".art").classList.toggle("off", !a.sel); count(); collectSourceNumbers();
-  });
-  box.querySelectorAll("[data-role]").forEach(el => el.onchange = e => { find(e.target.dataset.role).role = e.target.value; });
-  box.querySelectorAll("[data-note]").forEach(el => el.oninput = e => { find(e.target.dataset.note).note = e.target.value; });
-  box.querySelectorAll("[data-img]").forEach(img => img.onload = () => {
-    const a = find(img.dataset.img); a.imgW = img.naturalWidth; a.imgH = img.naturalHeight;
-  });
-  count();
-}
-const find = id => S.artifacts.find(x => x.id===id);
-const clip = (s,n) => (s && s.length>n) ? s.slice(0,n) + "\n… [salida recortada]" : (s||"");
-function count(){
-  const n = S.artifacts.filter(a=>a.sel).length;
-  $("#selCount").textContent = `${n} de ${S.artifacts.length} salidas marcadas`;
-}
-$("#selAll").onclick = () => { S.artifacts.forEach(a=>a.sel=true); renderInv(); collectSourceNumbers(); };
-$("#selNone").onclick = () => { S.artifacts.forEach(a=>a.sel=false); renderInv(); collectSourceNumbers(); };
-$("#selRel").onclick = () => { S.artifacts.forEach(a => a.sel = ["tabla","figura","contraste","modelo","descriptivo"].includes(a.role)); renderInv(); collectSourceNumbers(); };
-$("#toS3").onclick = () => {
-  if(!S.artifacts.some(a=>a.sel)){ alert("Marca al menos una salida."); return; }
-  markDone("s2"); show("s3");
-};
-
-function sanitizeTable(html){
-  const doc = new DOMParser().parseFromString(html, "text/html");
-  doc.querySelectorAll("style,script").forEach(n=>n.remove());
-  doc.querySelectorAll("*").forEach(n => { n.removeAttribute("style"); n.removeAttribute("class"); n.removeAttribute("id"); });
-  const t = doc.querySelector("table");
-  return t ? t.outerHTML : esc(html.slice(0,800));
-}
-function tableToRows(html){
-  const doc = new DOMParser().parseFromString(html, "text/html");
-  return Array.from(doc.querySelectorAll("tr")).map(tr =>
-    Array.from(tr.querySelectorAll("th,td")).map(td => td.textContent.trim())
-  ).filter(r => r.length);
-}
-function tableToText(html){
-  return tableToRows(html).map(r => r.join("\t")).join("\n");
-}
-
-/* ============================================================
-   Auditoría de cifras
-============================================================ */
-const NUMRE = /-?\d{1,3}(?:,\d{3})+(?:\.\d+)?|-?\d+(?:[.,]\d+)?(?:[eE][-+]?\d+)?/g;
-const SAFE = new Set([0.05,0.01,0.001,0.1,90,95,99,100,0,1,2]);
-
-function toNum(str){
-  let s = String(str).replace(/\s/g,"");
-  // separador de miles solo si el primer grupo no empieza por cero: 1,234 sí; 0,345 es decimal español
-  if(/^-?[1-9]\d{0,2}(,\d{3})+(\.\d+)?$/.test(s)) s = s.replace(/,/g,"");
-  else s = s.replace(",", ".");
-  const v = parseFloat(s);
-  return isFinite(v) ? v : null;
-}
-function numsIn(str){
-  const out = [];
-  (String(str||"").match(NUMRE) || []).forEach(m => { const v = toNum(m); if(v!==null) out.push(v); });
-  return out;
-}
-function collectSourceNumbers(){
-  const set = [];
-  S.artifacts.filter(a=>a.sel).forEach(a => {
-    const t = (a.text||"") + "\n" + (a.html ? tableToText(a.html) : "") + "\n" + (a.code||"");
-    numsIn(t).forEach(v => set.push(v));
-  });
-  S.srcNums = set;
-}
-function decimals(str){
-  const m = String(str).match(/[.,](\d+)/);
-  return m ? m[1].length : 0;
-}
-/** ¿La cifra del texto es un redondeo legítimo de alguna cifra de las salidas? */
-function verified(raw){
-  const v = toNum(raw); if(v===null) return true;
-  if(SAFE.has(Math.abs(v))) return true;
-  if(/^(19|20)\d\d$/.test(String(raw).replace(/\D/g,"")) && Number.isInteger(v)) return true;
-  const d = decimals(raw);
-  const tol = 0.5 * Math.pow(10, -d) + 1e-9;
-  for(const s of S.srcNums){
-    if(Math.abs(s - v) <= tol) return true;
-    if(Math.abs(s*100 - v) <= tol) return true;     // proporción del cuaderno escrita como porcentaje
   }
+  const tx = async (mode, fn) => {
+    const d = await open();
+    return new Promise((res, rej) => {
+      const t = d.transaction('docs', mode);
+      const st = t.objectStore('docs');
+      const rq = fn(st);
+      t.oncomplete = () => res(rq && rq.result);
+      t.onerror = () => rej(t.error);
+    });
+  };
+  return {
+    put: rec => tx('readwrite', st => st.put(rec)),
+    get: id => tx('readonly', st => st.get(id)),
+    all: () => tx('readonly', st => st.getAll()),
+    del: id => tx('readwrite', st => st.delete(id))
+  };
+})();
+
+async function persist() {
+  if (!state.doc) return;
+  const rec = {
+    id: state.doc.id,
+    name: state.doc.name,
+    createdAt: state.doc.createdAt,
+    updatedAt: Date.now(),
+    text: state.doc.text,
+    blocks: state.doc.blocks,
+    chunks: state.doc.chunks,
+    context: state.doc.context || '',
+    findings: state.findings,
+    edits: state.edits.map(e => ({ resumen: e.resumen, ts: e.ts, findingId: e.findingId })),
+    usage: state.usage
+  };
+  try { await DB.put(rec); } catch (e) { console.warn('persist', e); }
+}
+
+/* ---------- cliente OpenAI ---------- */
+async function llm({ system, user, json = true, temp = 0.2, maxTokens = 1600 }) {
+  if (state.abort) throw new Error('cancelado');
+  const body = {
+    model: cfg.model,
+    temperature: temp,
+    max_tokens: maxTokens,
+    messages: [{ role: 'system', content: system }, { role: 'user', content: user }]
+  };
+  if (json) body.response_format = { type: 'json_object' };
+
+  let lastErr;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    if (state.abort) throw new Error('cancelado');
+    try {
+      const r = await fetch(cfg.base.replace(/\/+$/, '') + '/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + S.key },
+        body: JSON.stringify(body)
+      });
+      if (r.status === 429 || r.status >= 500) { lastErr = new Error('HTTP ' + r.status); await sleep(1200 * (attempt + 1) + Math.random() * 600); continue; }
+      if (!r.ok) {
+        const t = await r.text();
+        throw new Error('La API respondió ' + r.status + ': ' + t.slice(0, 200));
+      }
+      const d = await r.json();
+      state.usage.calls++;
+      if (d.usage) { state.usage.in += d.usage.prompt_tokens || 0; state.usage.out += d.usage.completion_tokens || 0; }
+      const txt = (d.choices && d.choices[0] && d.choices[0].message.content) || '';
+      if (!json) return txt;
+      return safeJSON(txt);
+    } catch (e) {
+      lastErr = e;
+      if (/cancelado/.test(e.message)) throw e;
+      await sleep(900 * (attempt + 1));
+    }
+  }
+  throw lastErr || new Error('Fallo de red');
+}
+
+function safeJSON(txt) {
+  const clean = String(txt).replace(/```json/gi, '').replace(/```/g, '').trim();
+  try { return JSON.parse(clean); } catch (e) {}
+  const a = clean.indexOf('{'), b = clean.lastIndexOf('}');
+  if (a >= 0 && b > a) { try { return JSON.parse(clean.slice(a, b + 1)); } catch (e) {} }
+  return {};
+}
+
+/* ---------- pool de concurrencia ---------- */
+async function pool(items, worker, n, onTick) {
+  const out = new Array(items.length);
+  let i = 0, done = 0;
+  const runners = new Array(Math.min(n, items.length || 1)).fill(0).map(async () => {
+    while (i < items.length) {
+      if (state.abort) return;
+      const k = i++;
+      try { out[k] = await worker(items[k], k); }
+      catch (e) { out[k] = null; if (!/cancelado/.test(e.message)) console.warn(e); }
+      done++; if (onTick) onTick(done, items.length);
+    }
+  });
+  await Promise.all(runners);
+  return out.filter(Boolean);
+}
+/* ============================================================
+   1. Ingesta: PDF / DOCX / texto → texto limpio
+   ============================================================ */
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    if (document.querySelector('script[src="' + src + '"]')) return res();
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = () => rej(new Error('No se pudo cargar ' + src));
+    document.head.appendChild(s);
+  });
+}
+
+async function readFile(file) {
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  if (ext === 'pdf') return { name: file.name, text: await readPDF(file) };
+  if (ext === 'docx') return { name: file.name, text: await readDOCX(file) };
+  return { name: file.name, text: await file.text() };
+}
+
+async function readPDF(file) {
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const buf = await file.arrayBuffer();
+  const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+  const pages = [];
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const tc = await page.getTextContent();
+    // reconstruye líneas agrupando por posición vertical
+    const lines = new Map();
+    tc.items.forEach(it => {
+      const y = Math.round(it.transform[5]);
+      if (!lines.has(y)) lines.set(y, []);
+      lines.get(y).push(it);
+    });
+    const ys = Array.from(lines.keys()).sort((a, b) => b - a);
+    const txt = ys.map(y => lines.get(y)
+      .sort((a, b) => a.transform[4] - b.transform[4])
+      .map(i => i.str).join(' ').replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n');
+    pages.push(txt);
+  }
+  return joinPDFLines(pages.join('\n\n'));
+}
+
+// une líneas partidas del PDF en párrafos y deshace guiones de final de línea
+function joinPDFLines(t) {
+  const lines = t.split('\n');
+  const out = [];
+  for (let i = 0; i < lines.length; i++) {
+    const L = lines[i].trim();
+    if (!L) { out.push(''); continue; }
+    const prev = out.length ? out[out.length - 1] : '';
+    const cont = prev && !/[.:;!?»"”\)]$/.test(prev) && !isHeadingLine(prev) && !isHeadingLine(L)
+      && /^[a-záéíóúñüà-ÿ(“"']/.test(L) && prev.length > 40;
+    if (cont) {
+      out[out.length - 1] = prev.replace(/-$/, '') + (prev.endsWith('-') ? '' : ' ') + L;
+    } else out.push(L);
+  }
+  return out.join('\n').replace(/\n{3,}/g, '\n\n');
+}
+
+async function readDOCX(file) {
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js');
+  const buf = await file.arrayBuffer();
+  const r = await window.mammoth.convertToHtml({ arrayBuffer: buf });
+  const div = document.createElement('div');
+  div.innerHTML = r.value;
+  const parts = [];
+  div.childNodes.forEach(n => {
+    if (n.nodeType !== 1) return;
+    const tag = n.tagName.toLowerCase();
+    const txt = (n.textContent || '').replace(/\s+/g, ' ').trim();
+    if (!txt) return;
+    if (/^h[1-6]$/.test(tag)) parts.push('#'.repeat(+tag[1]) + ' ' + txt);
+    else if (tag === 'table') parts.push(n.innerText || txt);
+    else parts.push(txt);
+  });
+  return parts.join('\n\n');
+}
+
+/* ============================================================
+   2. Segmentación
+   ============================================================ */
+const HEAD_WORDS = /^(abstract|resumen|introducci[oó]n|introduction|antecedentes|background|estado del arte|related work|marco te[oó]rico|m[eé]todos?|methods?|methodology|metodolog[ií]a|materiales|datos|data|modelo|model|resultados?|results?|discusi[oó]n|discussion|conclusi[oó]n(es)?|conclusions?|limitaciones|limitations|agradecimientos|acknowledg(e)?ments|referencias|references|bibliograf[ií]a|ap[eé]ndice|appendix|anexo)\b/i;
+
+function isHeadingLine(L) {
+  const t = L.trim();
+  if (!t || t.length > 110) return false;
+  if (/^#{1,6}\s+\S/.test(t)) return true;
+  if (/[.;:]$/.test(t) && !/^\d/.test(t)) return false;
+  if (/^\d+(\.\d+)*[.)]?\s+\p{Lu}/u.test(t) && words(t) <= 14) return true;
+  if (HEAD_WORDS.test(t) && words(t) <= 8) return true;
+  if (t === t.toUpperCase() && /\p{L}/u.test(t) && words(t) <= 10 && t.length > 3) return true;
   return false;
 }
-function auditHtml(text){
-  let out = "", last = 0, bad = 0;
-  const src = String(text||"");
-  src.replace(NUMRE, (m, off) => {
-    const before = src.slice(Math.max(0,off-14), off);
-    out += esc(src.slice(last, off));
-    if(/(Tabla|Table|Figura|Figure|Fig\.?)\s*$/i.test(before)){ out += esc(m); }
-    else if(verified(m)){ out += esc(m); }
-    else { out += `<mark class="unv" title="Esta cifra no aparece en ninguna salida marcada del cuaderno">${esc(m)}</mark>`; bad++; }
-    last = off + m.length;
-    return m;
+
+function headingLevel(L) {
+  const m = L.match(/^(#{1,6})\s/);
+  if (m) return m[1].length;
+  const n = L.match(/^(\d+(?:\.\d+)*)/);
+  if (n) return Math.min(6, n[1].split('.').length);
+  return 2;
+}
+
+function segment(text) {
+  const clean = text.replace(/\r\n?/g, '\n').replace(/\u00a0/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  const blocks = [];
+  let pos = 0;
+  const raw = clean.split(/\n\s*\n/);
+  let section = 'Documento';
+  raw.forEach(rb => {
+    const start = clean.indexOf(rb, pos);
+    const s = start < 0 ? pos : start;
+    pos = s + rb.length;
+    const t = rb.trim();
+    if (!t) return;
+    const lines = t.split('\n');
+    const head = lines.length <= 2 && isHeadingLine(lines[0]);
+    if (head) section = lines[0].replace(/^#{1,6}\s+/, '').trim();
+    const tabular = !head && (lines.length > 2 && lines.filter(l => /\t|\s{3,}|\d\s+\d/.test(l)).length >= lines.length * 0.6);
+    blocks.push({
+      id: 'b' + blocks.length,
+      kind: head ? 'head' : (tabular ? 'tabular' : 'p'),
+      level: head ? headingLevel(lines[0]) : 0,
+      section, text: t, start: s, end: s + rb.length
+    });
   });
-  out += esc(src.slice(last));
-  return { html: out, bad };
+  return { text: clean, blocks };
+}
+
+function chunkify(blocks, maxWords) {
+  const chunks = [];
+  let cur = null;
+  blocks.forEach(b => {
+    if (!cur || (cur.wc + words(b.text) > maxWords && cur.wc > maxWords * 0.4)) {
+      cur = { id: 'c' + chunks.length, section: b.section, blocks: [], wc: 0, start: b.start, end: b.end };
+      chunks.push(cur);
+    }
+    cur.blocks.push(b.id);
+    cur.wc += words(b.text);
+    cur.end = b.end;
+    if (b.kind === 'head') cur.section = b.section;
+  });
+  return chunks.filter(c => c.wc > 12);
+}
+
+function chunkText(doc, c) {
+  return doc.blocks.filter(b => c.blocks.includes(b.id)).map(b => b.text).join('\n\n');
 }
 
 /* ============================================================
-   Construcción de la evidencia y llamada al modelo
-============================================================ */
-function buildEvidence(){
-  const sel = S.artifacts.filter(a=>a.sel);
-  let ev = "";
-  sel.forEach(a => {
-    ev += `\n===== SALIDA ${a.id} | ejecución [${a.exec}] | papel: ${a.role}\n`;
-    if(a.ctx) ev += `--- texto del cuaderno antes de la celda ---\n${clip(a.ctx,400)}\n`;
-    if(a.note) ev += `--- nota del investigador ---\n${a.note}\n`;
-    if(a.code) ev += `--- código ---\n${clip(a.code,900)}\n`;
-    if(a.html) ev += `--- tabla (tabulada) ---\n${clip(tableToText(a.html), 3000)}\n`;
-    else if(a.text) ev += `--- salida ---\n${clip(a.text, 3000)}\n`;
-    else if(a.png) ev += `--- salida ---\n[imagen PNG${$("#cVision").checked ? ", adjunta al mensaje" : ", no enviada"}]\n`;
-  });
-  S.evidence = ev.trim();
-  return S.evidence;
-}
-$("#btnEv").onclick = () => { $("#evTxt").textContent = buildEvidence() || "(nada marcado)"; $("#mEv").classList.add("on"); };
-
-function cfgObj(){
-  return {
-    lang: $("#cLang").value, style: $("#cStyle").value, journal: $("#cJournal").value.trim(),
-    len: $("#cLen").value, t0: parseInt($("#cT0").value)||1, f0: parseInt($("#cF0").value)||1,
-    methods: $("#cMethods").checked, ci: $("#cCI").checked, vision: $("#cVision").checked,
-    ctx: $("#cCtx").value.trim()
-  };
-}
-
-function systemPrompt(c){
-  const L = {es:"español",en:"inglés académico",ca:"valenciano"}[c.lang];
-  return `Eres redactor científico y bioestadístico. Escribes la sección de RESULTADOS de un artículo a partir de las salidas de un cuaderno de análisis ya ejecutado.
-
-REGLAS INNEGOCIABLES
-1. Solo puedes escribir cifras que aparezcan literalmente en la EVIDENCIA. No calcules, no estimes, no completes, no redondees hacia valores "más bonitos". Redondear a menos decimales sí está permitido.
-2. Si falta un estadístico que la norma exige (IC, tamaño del efecto, n por grupo, gl), NO lo inventes: anótalo en "vacios".
-3. No interpretes ni discutas los hallazgos. Nada de "lo que sugiere", "esto indica que", "es clínicamente relevante". Eso pertenece a Discusión.
-4. No copies el contenido numérico de las tablas dentro de la prosa fila por fila. La prosa destaca lo esencial y remite a la tabla.
-5. Escribe en pasado, voz activa cuando sea natural, tercera persona.
-
-FORMATO
-- Idioma: ${L}. Norma: ${c.style}. ${c.journal?`Revista objetivo: ${c.journal}.`:""}
-- Valores p exactos con tres decimales (p = .034); si es menor, p < .001.
-${c.ci?"- Incluye IC del 95 % y tamaños del efecto SIEMPRE que consten en la evidencia.":""}
-- Menciona cada tabla y cada figura en el texto al menos una vez (Tabla 1, Figura 1…).
-- Extensión ${c.len}.
-
-Devuelve EXCLUSIVAMENTE un objeto JSON, sin markdown ni comentarios, con esta forma:
-{
- "bloques":[{"encabezado":"...","parrafos":["...","..."]}],
- "tablas":[{"id":"A3","numero":1,"titulo":"...","nota":"..."}],
- "figuras":[{"id":"A5","numero":1,"leyenda":"..."}],
- "metodos_estadisticos":"${c.methods?"párrafo de Análisis estadístico":""}",
- "vacios":["..."]
-}
-Los "id" deben ser exactamente los identificadores de SALIDA que recibes. Numera tablas desde ${c.t0} y figuras desde ${c.f0}, en el orden en que las mencionas.`;
-}
-
-async function callModel(messages){
-  const prov = CFG.prov;
-  if(prov === "openai"){
-    if(!CFG.key) throw new Error("Falta la clave de OpenAI. Ábrela en «Modelo y clave».");
-    const r = await fetch("https://api.openai.com/v1/chat/completions", {
-      method:"POST",
-      headers:{ "Content-Type":"application/json", "Authorization":"Bearer "+CFG.key },
-      body: JSON.stringify({ model: CFG.model, messages, temperature:0.2, response_format:{type:"json_object"} })
-    });
-    if(!r.ok){ const t = await r.text(); throw new Error("OpenAI respondió "+r.status+": "+t.slice(0,300)); }
-    const d = await r.json();
-    return d.choices[0].message.content;
-  } else {
-    const flat = messages.map(m => ({
-      role: m.role,
-      content: Array.isArray(m.content) ? m.content.filter(p=>p.type==="text").map(p=>p.text).join("\n") : m.content
-    }));
-    const r = await fetch(CFG.url.replace(/\/$/,"") + "/api/chat", {
-      method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ model: CFG.model, messages: flat, stream:false, format:"json", options:{temperature:0.2} })
-    });
-    if(!r.ok) throw new Error("Ollama respondió " + r.status + ". ¿Está corriendo en " + CFG.url + "?");
-    const d = await r.json();
-    return d.message.content;
+   3. Anclaje de citas al texto original
+   ============================================================ */
+function buildIndex(text) {
+  // versión normalizada (minúsculas, sin acentos, espacios colapsados) + mapa de índices
+  const map = [];
+  let out = '';
+  let prevSpace = true;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    const isSp = /\s/.test(ch);
+    if (isSp) { if (prevSpace) continue; out += ' '; map.push(i); prevSpace = true; continue; }
+    prevSpace = false;
+    out += ch.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')[0] || ch.toLowerCase();
+    map.push(i);
   }
+  return { norm: out, map };
 }
 
-$("#btnGen").onclick = async () => {
-  const sel = S.artifacts.filter(a=>a.sel);
-  if(!sel.length){ alert("No hay salidas marcadas."); return; }
-  const c = cfgObj();
-  const ev = buildEvidence();
-  collectSourceNumbers();
+function anchor(idx, quote, hintStart, hintEnd) {
+  if (!quote || quote.length < 6) return null;
+  const q = buildIndex(quote).norm.trim();
+  if (!q) return null;
+  const from = Math.max(0, idx.map.findIndex(v => v >= (hintStart || 0)));
+  const region = hintEnd != null ? idx.map.findIndex(v => v >= hintEnd) : -1;
+  const to = region < 0 ? idx.norm.length : region;
 
-  const user = [];
-  let head = `CONTEXTO DEL ESTUDIO\n${c.ctx || "(no aportado)"}\n\nEVIDENCIA (salidas del cuaderno «${S.nbName}»)\n${ev}`;
-  user.push({type:"text", text: head});
-  if(c.vision){
-    sel.filter(a=>a.png).slice(0,6).forEach(a => {
-      user.push({type:"text", text:`Imagen de la SALIDA ${a.id}:`});
-      user.push({type:"image_url", image_url:{url:"data:image/png;base64,"+a.png, detail:"low"}});
-    });
-  }
+  let p = idx.norm.indexOf(q, from >= 0 ? from : 0);
+  if (p < 0 || (hintEnd != null && p > to)) p = idx.norm.indexOf(q);
+  if (p >= 0) return { start: idx.map[p], end: (idx.map[p + q.length - 1] ?? idx.map[idx.map.length - 1]) + 1 };
 
-  const btn = $("#btnGen"); btn.disabled = true;
-  $("#genStat").innerHTML = '<span class="spin"></span>Redactando…';
-  try{
-    const raw = await callModel([
-      {role:"system", content: systemPrompt(c)},
-      {role:"user", content: c.vision ? user : head}
-    ]);
-    const clean = raw.replace(/^```(?:json)?/i,"").replace(/```$/,"").trim();
-    S.result = JSON.parse(clean);
-    S.result._cfg = c;
-    renderMs();
-    markDone("s3"); show("s4");
-    $("#genStat").textContent = "";
-  }catch(err){
-    $("#genStat").textContent = "";
-    alert("No se pudo redactar: " + err.message);
-  }finally{ btn.disabled = false; }
-};
-
+  // aproximación: busca por los primeros y últimos términos de la cita
+  const tk = q.split(' ').filter(w => w.length > 2);
+  if (tk.length < 3) return null;
+  const head = tk.slice(0, 4).join(' '), tail = tk.slice(-4).join(' ');
+  let a = idx.norm.indexOf(head, from >= 0 ? from : 0);
+  if (a < 0) a = idx.norm.indexOf(head);
+  if (a < 0) return null;
+  let b = idx.norm.indexOf(tail, a);
+  if (b < 0 || b - a > q.length * 2.5) b = a + q.length;
+  else b = b + tail.length;
+  const endIdx = Math.min(b, idx.norm.length) - 1;
+  return { start: idx.map[a], end: (idx.map[endIdx] ?? idx.map[idx.map.length - 1]) + 1, fuzzy: true };
+}
 /* ============================================================
-   Manuscrito
-============================================================ */
-function renderMs(){
-  const R = S.result, c = R._cfg;
-  let h = "";
-  let totalBad = 0;
-
-  if(c.methods && R.metodos_estadisticos){
-    const a = auditHtml(R.metodos_estadisticos); totalBad += a.bad;
-    h += `<h3>Análisis estadístico <span class="pill">para Métodos</span></h3><p contenteditable="true" data-p="m0">${a.html}</p>`;
+   4. Lentes de revisión
+   ============================================================ */
+const LENSES = [
+  {
+    id: 'exactitud', name: 'Exactitud y datos', on: true,
+    desc: 'Afirmaciones empíricas que el texto no sostiene, cifras mal descritas, exageraciones.',
+    focus: `Afirmaciones fácticas y empíricas. Busca: descripciones que no se corresponden con lo que muestran los datos o las tablas citadas; magnitudes, porcentajes o unidades mal escritos; conclusiones más fuertes que la evidencia presentada; términos técnicos usados con un significado incorrecto.`
+  },
+  {
+    id: 'matematica', name: 'Razonamiento matemático', on: true,
+    desc: 'Supuestos implícitos, casos no cubiertos, pasos de demostración que no se siguen.',
+    focus: `Definiciones, lemas, proposiciones, demostraciones y derivaciones. Busca: supuestos usados pero no enunciados (por ejemplo, un argumento que presupone que una variable es no negativa cuando los supuestos no lo exigen); casos del dominio que la demostración no cubre; pasos que no se siguen del anterior; símbolos usados antes de definirse o con dos significados; errores algebraicos o de signo.`
+  },
+  {
+    id: 'metodo', name: 'Método y estadística', on: true,
+    desc: 'Identificación, estimadores, supuestos del diseño, inferencia.',
+    focus: `Diseño empírico e inferencia. Busca: estimadores mal especificados para el estimando declarado (por ejemplo, ponderaciones incorrectas para un ATT); supuestos de identificación que no se enuncian ni se contrastan; errores estándar o agrupamiento inadecuados; comparaciones múltiples sin corrección; tamaño de muestra, pérdidas o exclusiones sin justificar; confusión entre asociación y causalidad.`
+  },
+  {
+    id: 'consistencia', name: 'Consistencia interna', on: true,
+    desc: 'Contradicciones entre lo que se dice aquí y lo que se dice en otro sitio.',
+    focus: `Coherencia dentro del pasaje y con el resto del documento. Busca: cifras que se repiten con valores distintos; el texto que describe una columna o fila de una tabla distinta de la que muestra; una definición que cambia a mitad del trabajo; una hipótesis enunciada que luego no se contrasta; el número de casos, variables o periodos que no cuadra.`
+  },
+  {
+    id: 'referencias', name: 'Referencias y atribución', on: false,
+    desc: 'Citas que no sostienen lo que se les atribuye, huecos en la literatura.',
+    focus: `Uso de la literatura. Busca: afirmaciones atribuidas a un trabajo citado que probablemente no dice eso; citas necesarias que faltan para una afirmación no trivial; referencias mencionadas en el texto que no encajan con la descripción; atribución de un resultado a quien no lo obtuvo. No inventes referencias.`
+  },
+  {
+    id: 'argumentacion', name: 'Argumentación y claridad', on: false,
+    desc: 'Saltos lógicos, ambigüedades que un revisor marcaría, contribución poco delimitada.',
+    focus: `Estructura del argumento. Busca: saltos entre premisa y conclusión; formulaciones ambiguas que permiten dos lecturas incompatibles; la contribución declarada que no se corresponde con lo que se hace; conceptos centrales usados sin definir. Ignora el estilo, la ortografía y las preferencias de redacción.`
   }
-
-  h += `<h3>${c.lang==="en"?"Results":"Resultados"}</h3>`;
-  (R.bloques||[]).forEach((b, bi) => {
-    if(b.encabezado) h += `<h4>${esc(b.encabezado)}</h4>`;
-    (b.parrafos||[]).forEach((p, pi) => {
-      const a = auditHtml(p); totalBad += a.bad;
-      h += `<p contenteditable="true" data-p="${bi}.${pi}">${a.html}</p>`;
-    });
-  });
-
-  (R.tablas||[]).forEach(t => {
-    const art = find(t.id); if(!art) return;
-    const inner = art.html ? sanitizeTable(art.html) : `<pre style="font-family:var(--mono);font-size:11.5px">${esc(art.text)}</pre>`;
-    h += `<div class="tblbox">
-      <div class="tblcap"><b>Tabla ${t.numero}.</b> ${esc(t.titulo||"")}</div>
-      ${inner}
-      ${t.nota?`<div class="tblnote">Nota. ${esc(t.nota)}</div>`:""}
-    </div>`;
-  });
-
-  (R.figuras||[]).forEach(f => {
-    const art = find(f.id); if(!art || !art.png) return;
-    h += `<div class="figbox">
-      <img src="data:image/png;base64,${art.png}" alt="Figura ${f.numero}">
-      <div class="tblcap" style="margin-top:6px"><b>Figura ${f.numero}.</b> ${esc(f.leyenda||"")}</div>
-    </div>`;
-  });
-
-  $("#ms").innerHTML = h;
-  $$("#ms p[contenteditable]").forEach(p => p.addEventListener("blur", syncEdits));
-
-  renderAudit(totalBad);
-  renderGaps();
-}
-
-function renderAudit(bad){
-  $("#audit").innerHTML = bad
-    ? `<div class="panel"><h4>${bad} cifra${bad>1?"s":""} sin respaldo</h4><p style="margin:0;font-size:13.5px">Estas cifras no coinciden con ninguna salida marcada del cuaderno. Puede que el modelo las haya inventado, o que procedan de una salida que no marcaste. Revísalas una a una antes de dar el texto por bueno.</p></div>`
-    : `<div class="panel good"><h4>Cifras verificadas</h4><p style="margin:0;font-size:13.5px">Todas las cifras del texto se corresponden con alguna salida del cuaderno. Esto no valida el análisis, solo la transcripción.</p></div>`;
-}
-function renderGaps(){
-  const g = (S.result.vacios||[]).filter(Boolean);
-  $("#gaps").innerHTML = g.length
-    ? `<div class="panel"><h4>Lo que falta en el cuaderno</h4><ul>${g.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>` : "";
-}
-function syncEdits(){
-  const R = S.result;
-  $$("#ms p[contenteditable]").forEach(p => {
-    const k = p.dataset.p, txt = p.innerText;
-    if(k === "m0"){ R.metodos_estadisticos = txt; return; }
-    const [bi,pi] = k.split(".").map(Number);
-    if(R.bloques[bi] && R.bloques[bi].parrafos) R.bloques[bi].parrafos[pi] = txt;
-  });
-}
-$("#reAudit").onclick = () => { syncEdits(); collectSourceNumbers(); renderMs(); };
-
-/* ============================================================
-   Exportación
-============================================================ */
-function plainText(){
-  const R = S.result, c = R._cfg; let t = "";
-  if(c.methods && R.metodos_estadisticos) t += "ANÁLISIS ESTADÍSTICO\n\n" + R.metodos_estadisticos + "\n\n";
-  t += (c.lang==="en"?"RESULTS":"RESULTADOS") + "\n\n";
-  (R.bloques||[]).forEach(b => {
-    if(b.encabezado) t += b.encabezado + "\n\n";
-    (b.parrafos||[]).forEach(p => t += p + "\n\n");
-  });
-  (R.tablas||[]).forEach(x => {
-    const art = find(x.id);
-    t += `Tabla ${x.numero}. ${x.titulo||""}\n`;
-    if(art) t += (art.html ? tableToText(art.html) : art.text) + "\n";
-    if(x.nota) t += `Nota. ${x.nota}\n`;
-    t += "\n";
-  });
-  (R.figuras||[]).forEach(x => t += `Figura ${x.numero}. ${x.leyenda||""}\n\n`);
-  return t;
-}
-function dl(blob, name){
-  const u = URL.createObjectURL(blob), a = document.createElement("a");
-  a.href = u; a.download = name; a.rel = "noopener";
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(()=>URL.revokeObjectURL(u), 3000);
-}
-
-/* Carga perezosa de docx con CDN de reserva y copia local opcional en ./vendor/ */
-const DOCX_SOURCES = [
-  "https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js",
-  "https://unpkg.com/docx@8.5.0/build/index.umd.js",
-  "./vendor/docx.umd.js"
 ];
-function loadScript(src){
-  return new Promise((res, rej) => {
-    const t = document.createElement("script");
-    t.src = src; t.onload = () => res(); t.onerror = () => rej(new Error(src));
-    document.head.appendChild(t);
-  });
-}
-async function ensureDocx(){
-  if(window.docx) return window.docx;
-  for(const src of DOCX_SOURCES){
-    try{ await loadScript(src); if(window.docx) return window.docx; }catch(e){}
-  }
-  throw new Error("No se ha podido cargar la librería docx.");
-}
-$("#copyTxt").onclick = () => { syncEdits(); navigator.clipboard.writeText(plainText()); $("#copyTxt").textContent = "Copiado"; setTimeout(()=>$("#copyTxt").textContent="Copiar texto",1200); };
-$("#expMd").onclick = () => {
-  syncEdits(); const R = S.result; let m = "# Resultados\n\n";
-  if(R._cfg.methods && R.metodos_estadisticos) m = "## Análisis estadístico\n\n" + R.metodos_estadisticos + "\n\n# Resultados\n\n";
-  (R.bloques||[]).forEach(b => { if(b.encabezado) m += `## ${b.encabezado}\n\n`; (b.parrafos||[]).forEach(p => m += p + "\n\n"); });
-  (R.tablas||[]).forEach(x => {
-    const art = find(x.id); m += `**Tabla ${x.numero}.** ${x.titulo||""}\n\n`;
-    if(art && art.html){ const rows = tableToRows(art.html);
-      if(rows.length){ m += "| " + rows[0].join(" | ") + " |\n| " + rows[0].map(()=>"---").join(" | ") + " |\n";
-        rows.slice(1).forEach(r => m += "| " + r.join(" | ") + " |\n"); m += "\n"; }
-    } else if(art){ m += "```\n" + art.text + "\n```\n\n"; }
-    if(x.nota) m += `*Nota. ${x.nota}*\n\n`;
-  });
-  (R.figuras||[]).forEach(x => m += `**Figura ${x.numero}.** ${x.leyenda||""}\n\n`);
-  dl(new Blob([m], {type:"text/markdown"}), baseName()+"_resultados.md");
-};
-const baseName = () => (S.nbName||"cuaderno").replace(/\.ipynb$/i,"");
 
-function b64ToBytes(b64){
-  const bin = atob(b64), arr = new Uint8Array(bin.length);
-  for(let i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
-  return arr;
+const BASE_RULES = `Actúas como un revisor experto y escéptico que lee un manuscrito académico antes de su envío.
+
+Reglas innegociables:
+1. Sólo señalas defectos concretos y verificables en el texto que se te da. Si el pasaje está bien, devuelves una lista vacía. Es correcto y esperado devolver cero hallazgos.
+2. Nada de comentarios genéricos, de estilo, de formato ni de ortografía. Nada de "podría explicarse mejor" o "sería conveniente ampliar". Si el comentario podría copiarse a cualquier otro artículo, no lo escribas.
+3. Cada hallazgo se ancla a una cita LITERAL del pasaje, copiada carácter a carácter, de entre 4 y 20 palabras. No parafrasees la cita ni la corrijas.
+4. No inventes datos, referencias ni resultados. Si sospechas de un error pero no puedes sostenerlo con lo que ves, baja la confianza en lugar de afirmarlo.
+5. La severidad es "alta" si invalida un resultado o una conclusión, "media" si obliga a rehacer o matizar una parte, "baja" si es una imprecisión que un revisor marcaría sin más.
+6. Responde exclusivamente con JSON válido.`;
+
+function langLine() {
+  const el = $('#lang');
+  const l = el ? el.value : 'auto';
+  if (l === 'es') return 'Escribe todos los comentarios en español.';
+  if (l === 'en') return 'Write every comment in English.';
+  return 'Escribe los comentarios en el mismo idioma del manuscrito.';
 }
-$("#expDocx").onclick = async () => {
-  const btn = $("#expDocx");
-  if(!S.result){ alert("Todavía no hay manuscrito que exportar."); return; }
-  syncEdits();
-  const R = S.result, c = R._cfg || {};
-  let D;
-  const label = btn.textContent;
-  btn.disabled = true; btn.textContent = "Generando…";
-  try{
-    D = await ensureDocx();
-  }catch(err){
-    btn.disabled = false; btn.textContent = label;
-    alert("No se ha podido cargar la librería que genera el .docx (sin conexión o CDN bloqueado).\n\nPuedes descargar el manuscrito en Markdown mientras tanto.");
+
+/* ---------- prompts ---------- */
+function lensPrompt(lens) {
+  return `${BASE_RULES}
+
+Tu lente de lectura en esta pasada: ${lens.name}.
+${lens.focus}
+Ignora cualquier problema que no pertenezca a esta lente; otras pasadas se ocupan de ellos.
+${langLine()}
+
+Formato de respuesta:
+{"hallazgos":[{"titulo":"resumen del problema en una línea","cita":"texto literal del pasaje","comentario":"qué está mal y por qué importa, en 1-3 frases","sugerencia":"qué hacer para arreglarlo, en una frase","severidad":"alta|media|baja","confianza":0.0}]}`;
+}
+
+const EXTRACT_PROMPT = `Extraes el esqueleto factual de un pasaje de un manuscrito académico para poder comparar después unas partes con otras. No opinas ni evalúas.
+
+Devuelve JSON:
+{"resumen":"2-3 frases con lo que afirma y hace este pasaje",
+ "afirmaciones":[{"texto":"afirmación concreta, cuantitativa si la hay","cita":"texto literal del pasaje, 4-20 palabras"}],
+ "definiciones":[{"termino":"símbolo o concepto definido","significado":"definición tal como aparece"}]}
+Incluye como afirmaciones todas las cifras relevantes (muestras, coeficientes, porcentajes, p-valores, magnitudes) con su cita literal. Máximo 10 afirmaciones y 8 definiciones.`;
+
+function globalPrompt() { return `${BASE_RULES}
+
+Recibes el mapa completo de un manuscrito: sus secciones, lo que afirma cada pasaje y sus cifras con la cita literal donde aparecen. Tu tarea es la que ninguna lectura local puede hacer: encontrar CONTRADICCIONES ENTRE PARTES DISTANTES del documento.
+
+Busca en particular:
+- La misma cantidad con dos valores distintos en dos sitios.
+- Lo que el texto dice de una tabla o figura frente a lo que dicen las cifras registradas de esa tabla.
+- Un término o símbolo definido de dos maneras incompatibles.
+- Una hipótesis, una promesa del resumen o de la introducción que después no se cumple.
+- Una conclusión que no corresponde a los resultados registrados.
+
+La "cita" de cada hallazgo debe ser una de las citas literales que aparecen en el mapa, copiada exactamente. Indica también el identificador del pasaje del que la tomas.
+${langLine()}
+
+Formato:
+{"hallazgos":[{"titulo":"...","cita":"cita literal tomada del mapa","pasaje":"cN","comentario":"qué se contradice con qué, nombrando ambas partes","sugerencia":"...","severidad":"alta|media|baja","confianza":0.0}]}`; }
+
+const VERIFY_PROMPT = `Eres el filtro de calidad de una revisión de manuscritos. Recibes un pasaje y una lista de hallazgos preliminares sobre él, propuestos por lectores automáticos. Tu trabajo es proteger al autor del ruido: la mayoría de los hallazgos débiles deben caer.
+
+Descarta un hallazgo si: no se sostiene con lo que el pasaje dice; la cita no aparece en el pasaje; es una cuestión de estilo, formato u opinión; es genérico; repite otro hallazgo de la lista; o el supuesto error se explica en el propio pasaje.
+Conserva el hallazgo si un revisor competente lo escribiría en su informe. Si dos hallazgos son el mismo problema, conserva el mejor formulado y marca el otro como duplicado.
+Puedes reescribir el título, el comentario y la sugerencia para que sean más precisos y concretos, y ajustar la severidad. No cambies la cita.
+
+Devuelve JSON:
+{"veredictos":[{"id":"id del hallazgo","mantener":true,"severidad":"alta|media|baja","confianza":0.0,"titulo":"...","comentario":"...","sugerencia":"...","motivo":"por qué se descarta, si se descarta"}]}`;
+
+/* ============================================================
+   5. Canalización
+   ============================================================ */
+async function runReview() {
+  if (!S.key) { toast('Añade tu clave de API en Ajustes'); openSettings(); return; }
+  const doc = state.doc;
+  const depth = $('#depth') ? $('#depth').value : 'estandar';
+  const active = LENSES.filter(l => l.on);
+  if (!active.length) { toast('Selecciona al menos una lente'); return; }
+
+  state.running = true; state.abort = false; state.findings = []; state.usage = { in: 0, out: 0, calls: 0 };
+  $('#btnCancel').style.display = ''; $('#btnRun') && ($('#btnRun').disabled = true);
+  renderFindings();
+
+  const idx = buildIndex(doc.text);
+  const samples = depth === 'profunda' ? 2 : 1;
+  const chunks = doc.chunks;
+
+  /* --- fase 1: lentes en paralelo (+ extracción del esqueleto) --- */
+  const tasks = [];
+  chunks.forEach(c => {
+    tasks.push({ kind: 'extract', c });
+    active.forEach(l => { for (let k = 0; k < samples; k++) tasks.push({ kind: 'lens', c, lens: l, k }); });
+  });
+
+  const skeleton = {};
+  const raw = [];
+  setProgress(0, tasks.length, 'Leyendo el documento');
+
+  await pool(tasks, async t => {
+    const body = `Sección: ${t.c.section}\nIdentificador del pasaje: ${t.c.id}\n\n<<<PASAJE>>>\n${chunkText(doc, t.c)}\n<<<FIN>>>`;
+    if (t.kind === 'extract') {
+      const r = await llm({ system: EXTRACT_PROMPT, user: body, temp: 0, maxTokens: 1100 });
+      skeleton[t.c.id] = { section: t.c.section, ...r };
+      return true;
+    }
+    const r = await llm({
+      system: lensPrompt(t.lens),
+      user: body + (doc.context ? `\n\nContexto del trabajo: ${doc.context}` : ''),
+      temp: t.k ? 0.65 : 0.15, maxTokens: 1500
+    });
+    (r.hallazgos || []).forEach(h => raw.push(Object.assign({}, h, {
+      id: uid(), chunk: t.c.id, section: t.c.section, categoria: t.lens.name, lente: t.lens.id, muestra: t.k
+    })));
+    return true;
+  }, cfg.conc, (d, n) => setProgress(d, n, 'Leyendo el documento'));
+
+  if (state.abort) return endRun();
+
+  /* --- fase 2: consistencia entre secciones --- */
+  const mapLines = chunks.map(c => {
+    const s = skeleton[c.id]; if (!s) return '';
+    const af = (s.afirmaciones || []).map(a => `    · ${a.texto}  ⟨cita: "${a.cita}"⟩`).join('\n');
+    const de = (s.definiciones || []).map(d => `    · ${d.termino} = ${d.significado}`).join('\n');
+    return `[${c.id}] ${c.section}\n  Resumen: ${s.resumen || ''}\n${af ? '  Afirmaciones:\n' + af + '\n' : ''}${de ? '  Definiciones:\n' + de + '\n' : ''}`;
+  }).filter(Boolean);
+
+  const groups = [];
+  for (let i = 0; i < mapLines.length; i += 24) groups.push(mapLines.slice(i, i + 24));
+  const globalTasks = groups.length > 1 ? [mapLines.join('\n'), ...groups.map(g => g.join('\n'))] : [mapLines.join('\n')];
+
+  setProgress(0, globalTasks.length, 'Contrastando unas partes con otras');
+  await pool(globalTasks.slice(0, 4), async (mapText, i) => {
+    const r = await llm({ system: globalPrompt(), user: `Mapa del manuscrito «${doc.name}»:\n\n${mapText.slice(0, 60000)}`, temp: 0.2, maxTokens: 2000 });
+    (r.hallazgos || []).forEach(h => raw.push(Object.assign({}, h, {
+      id: uid(), chunk: h.pasaje || null, section: 'Documento completo',
+      categoria: 'Consistencia entre secciones', lente: 'global'
+    })));
+    return true;
+  }, Math.min(cfg.conc, 3), (d, n) => setProgress(d, n, 'Contrastando unas partes con otras'));
+
+  if (state.abort) return endRun();
+
+  /* --- fase 3: anclaje y deduplicación --- */
+  raw.forEach(h => {
+    const c = doc.chunks.find(x => x.id === h.chunk);
+    const a = anchor(idx, h.cita, c ? c.start : 0, c ? c.end : null) || anchor(idx, h.cita, 0, null);
+    if (a) { h.start = a.start; h.end = a.end; h.fuzzy = !!a.fuzzy; }
+  });
+
+  const deduped = dedupe(raw);
+
+  /* --- fase 4: verificación --- */
+  let finalFindings = deduped;
+  if (depth !== 'rapida' && deduped.length) {
+    const byChunk = new Map();
+    deduped.forEach(h => {
+      const k = h.chunk || 'global';
+      if (!byChunk.has(k)) byChunk.set(k, []);
+      byChunk.get(k).push(h);
+    });
+    const jobs = Array.from(byChunk.entries());
+    setProgress(0, jobs.length, 'Verificando los hallazgos');
+    const verdicts = {};
+    await pool(jobs, async ([ck, hs]) => {
+      const c = doc.chunks.find(x => x.id === ck);
+      const passage = c ? chunkText(doc, c) : hs.map(h => `"${h.cita}"`).join('\n');
+      const list = hs.map(h => `- id: ${h.id}\n  categoría: ${h.categoria}\n  título: ${h.titulo}\n  cita: "${h.cita}"\n  comentario: ${h.comentario}\n  sugerencia: ${h.sugerencia || ''}\n  severidad propuesta: ${h.severidad}\n  corroborado por ${h.veces || 1} lectura(s)`).join('\n');
+      const r = await llm({
+        system: VERIFY_PROMPT,
+        user: `<<<PASAJE>>>\n${passage}\n<<<FIN>>>\n\nHallazgos preliminares:\n${list}\n\n${langLine()}`,
+        temp: 0, maxTokens: 2200
+      });
+      (r.veredictos || []).forEach(v => { verdicts[v.id] = v; });
+      return true;
+    }, cfg.conc, (d, n) => setProgress(d, n, 'Verificando los hallazgos'));
+
+    finalFindings = deduped.filter(h => {
+      const v = verdicts[h.id];
+      if (!v) return (h.confianza || 0.6) >= cfg.minConf;
+      if (v.mantener === false) return false;
+      if (v.titulo) h.titulo = v.titulo;
+      if (v.comentario) h.comentario = v.comentario;
+      if (v.sugerencia) h.sugerencia = v.sugerencia;
+      if (v.severidad) h.severidad = v.severidad;
+      h.confianza = v.confianza != null ? v.confianza : h.confianza;
+      h.verificado = true;
+      return (h.confianza || 0.7) >= cfg.minConf;
+    });
+  }
+
+  finalFindings.forEach(h => { h.estado = 'pendiente'; });
+  finalFindings.sort((a, b) => (a.start ?? 1e9) - (b.start ?? 1e9));
+  state.findings = finalFindings;
+  await persist();
+  endRun();
+  renderDoc(); renderFindings();
+  toast(finalFindings.length ? `Revisión terminada: ${finalFindings.length} comentarios` : 'Revisión terminada sin hallazgos que sostener');
+}
+
+/* deduplicación por solapamiento de cita y de problema */
+function dedupe(list) {
+  const out = [];
+  list.forEach(h => {
+    if (!h.cita || !h.titulo) return;
+    const nq = norm(h.cita), nt = norm(h.titulo);
+    const hit = out.find(o => {
+      const oq = norm(o.cita);
+      const overlap = (o.start != null && h.start != null) ? !(h.end < o.start || h.start > o.end) : (oq === nq || oq.includes(nq) || nq.includes(oq));
+      return overlap && (jaccard(nt, norm(o.titulo)) > 0.45 || o.lente === h.lente);
+    });
+    if (hit) {
+      hit.veces = (hit.veces || 1) + 1;
+      if (sevRank(h.severidad) > sevRank(hit.severidad)) hit.severidad = h.severidad;
+      if ((h.comentario || '').length > (hit.comentario || '').length + 60) hit.comentario = h.comentario;
+    } else { h.veces = 1; out.push(h); }
+  });
+  return out;
+}
+const sevRank = s => ({ alta: 3, media: 2, baja: 1 }[s] || 1);
+function jaccard(a, b) {
+  const A = new Set(a.split(' ').filter(w => w.length > 3)), B = new Set(b.split(' ').filter(w => w.length > 3));
+  if (!A.size || !B.size) return 0;
+  let inter = 0; A.forEach(w => { if (B.has(w)) inter++; });
+  return inter / (A.size + B.size - inter);
+}
+
+function endRun() {
+  state.running = false;
+  $('#btnCancel').style.display = 'none';
+  $('#progress').classList.remove('on');
+  if ($('#btnRun')) $('#btnRun').disabled = false;
+}
+
+function setProgress(done, total, label) {
+  const p = $('#progress'); p.classList.add('on');
+  $('#pbar').style.width = (total ? (done / total * 100) : 0).toFixed(1) + '%';
+  const cost = estimateCost(state.usage.in, state.usage.out);
+  $('#ptext').textContent = `${label} · ${done}/${total} · ${state.usage.calls} llamadas · ~${cost} $`;
+}
+function estimateCost(inTok, outTok) {
+  return (inTok / 1e6 * 0.15 + outTok / 1e6 * 0.60).toFixed(3);
+}
+/* ============================================================
+   6. Renderizado del documento
+   ============================================================ */
+function visible(h) {
+  const f = state.filters;
+  if (f.sev.size && !f.sev.has(h.severidad)) return false;
+  if (f.cat.size && !f.cat.has(h.categoria)) return false;
+  if (f.estado === 'abiertos' && h.estado !== 'pendiente') return false;
+  if (f.estado === 'hechos' && h.estado !== 'hecho') return false;
+  if (f.estado === 'descartados' && h.estado !== 'descartado') return false;
+  return true;
+}
+
+function renderDoc() {
+  const doc = state.doc;
+  if (!doc) return;
+  $('#start').style.display = 'none';
+  const host = $('#sheetHost');
+  const marks = state.findings.filter(h => h.start != null && visible(h)).sort((a, b) => a.start - b.start);
+
+  const html = doc.blocks.map(b => {
+    const inner = markup(b, marks);
+    if (b.kind === 'head') {
+      const lvl = Math.min(3, Math.max(1, b.level));
+      return `<h${lvl} id="blk-${b.id}">${inner}</h${lvl}>`;
+    }
+    return `<p id="blk-${b.id}" class="${b.kind === 'tabular' ? 'tabular' : ''}">${inner}</p>`;
+  }).join('');
+
+  host.innerHTML = `<article class="sheet" id="sheet">${html}</article>`;
+  $$('#sheet mark.f').forEach(m => {
+    m.addEventListener('click', () => selectFinding(m.dataset.id, 'doc'));
+    m.tabIndex = 0;
+    m.addEventListener('keydown', e => { if (e.key === 'Enter') selectFinding(m.dataset.id, 'doc'); });
+  });
+  renderSpine();
+}
+
+function markup(b, marks) {
+  const local = marks.filter(m => m.end > b.start && m.start < b.end);
+  const raw = b.text;
+  if (!local.length) return esc(raw).replace(/\n/g, '<br>');
+  // recorta solapamientos: gana el que empieza antes
+  const segs = [];
+  let cursor = b.start;
+  local.forEach(m => {
+    const s = Math.max(m.start, cursor, b.start), e = Math.min(m.end, b.end);
+    if (e <= s) return;
+    if (s > cursor) segs.push({ t: 'x', a: cursor, b: s });
+    segs.push({ t: 'm', a: s, b: e, m });
+    cursor = e;
+  });
+  if (cursor < b.end) segs.push({ t: 'x', a: cursor, b: b.end });
+
+  const full = state.doc.text;
+  return segs.map(s => {
+    const piece = esc(full.slice(s.a, s.b)).replace(/\n/g, '<br>');
+    if (s.t === 'x') return piece;
+    const cls = ['f', 's-' + (s.m.severidad || 'baja')];
+    if (s.m.estado === 'hecho') cls.push('done');
+    if (s.m.estado === 'descartado') cls.push('dropped');
+    return `<mark class="${cls.join(' ')}" data-id="${s.m.id}" role="button" title="${esc(s.m.titulo)}">${piece}</mark>`;
+  }).join('');
+}
+
+/* ---------- espina lateral (densidad de comentarios) ---------- */
+function renderSpine() {
+  const sp = $('#spine'), sheet = $('#sheet');
+  if (!sheet) { sp.innerHTML = ''; return; }
+  const H = sheet.scrollHeight || 1;
+  sp.innerHTML = '';
+  state.findings.filter(h => h.start != null && visible(h)).forEach(h => {
+    const el = document.querySelector(`#sheet mark[data-id="${h.id}"]`);
+    if (!el) return;
+    const top = (el.offsetTop / H) * 100;
+    const d = document.createElement('div');
+    d.className = 'tick s-' + (h.severidad || 'baja') + (h.estado !== 'pendiente' ? ' done' : '');
+    d.style.top = top + '%';
+    d.title = h.titulo;
+    d.addEventListener('click', () => selectFinding(h.id, 'spine'));
+    sp.appendChild(d);
+  });
+  const view = document.createElement('div');
+  view.className = 'view'; view.id = 'spineView';
+  sp.appendChild(view);
+  syncSpineView();
+}
+function syncSpineView() {
+  const pane = $('#docpane'), v = $('#spineView'), sheet = $('#sheet');
+  if (!v || !sheet) return;
+  const H = sheet.scrollHeight || 1;
+  v.style.top = Math.max(0, (pane.scrollTop - sheet.offsetTop) / H * 100) + '%';
+  v.style.height = Math.min(100, pane.clientHeight / H * 100) + '%';
+}
+
+/* ============================================================
+   7. Panel de comentarios
+   ============================================================ */
+function renderFilters() {
+  const cats = Array.from(new Set(state.findings.map(h => h.categoria)));
+  const f = state.filters;
+  const chip = (label, pressed, on) => {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.textContent = label; b.setAttribute('aria-pressed', pressed);
+    b.addEventListener('click', on); return b;
+  };
+  const box = $('#filters'); box.innerHTML = '';
+  ['abiertos', 'hechos', 'descartados', 'todos'].forEach(k => {
+    box.appendChild(chip({ abiertos: 'Abiertos', hechos: 'Resueltos', descartados: 'Descartados', todos: 'Todos' }[k],
+      f.estado === k, () => { f.estado = k; refresh(); }));
+  });
+  ['alta', 'media', 'baja'].forEach(s => {
+    box.appendChild(chip({ alta: 'Alta', media: 'Media', baja: 'Baja' }[s], f.sev.has(s),
+      () => { f.sev.has(s) ? f.sev.delete(s) : f.sev.add(s); refresh(); }));
+  });
+  cats.forEach(c => box.appendChild(chip(c, f.cat.has(c),
+    () => { f.cat.has(c) ? f.cat.delete(c) : f.cat.add(c); refresh(); })));
+}
+
+function renderFindings() {
+  const list = $('#list');
+  const vis = state.findings.filter(visible);
+  const abiertas = state.findings.filter(h => h.estado === 'pendiente');
+  const altas = abiertas.filter(h => h.severidad === 'alta').length;
+  $('#tallyN').textContent = abiertas.length;
+  $('#tallyT').textContent = abiertas.length === 1 ? 'comentario abierto' :
+    `comentarios abiertos${altas ? ` · ${altas} de severidad alta` : ''}`;
+  renderFilters();
+
+  if (!state.findings.length) {
+    list.innerHTML = `<div class="empty"><h3>${state.doc ? 'Sin comentarios todavía' : 'Todavía no hay revisión'}</h3>
+      <p>${state.doc ? 'Ejecuta la revisión para que RefinIA lea el manuscrito pasaje a pasaje.' : 'Carga un manuscrito para empezar.'}</p></div>`;
     return;
   }
-  try{
-  const kids = [];
-  const P = (text, opt={}) => new D.Paragraph({ children:[new D.TextRun({text, font:"Times New Roman", size:24, ...opt.run})], spacing:{after:180, line:360}, alignment: opt.align||D.AlignmentType.JUSTIFIED });
-  const H = (text, lvl) => new D.Paragraph({ text, heading: lvl, spacing:{before:280, after:140} });
-
-  if(c.methods && R.metodos_estadisticos){ kids.push(H("Análisis estadístico", D.HeadingLevel.HEADING_1)); kids.push(P(R.metodos_estadisticos)); }
-  kids.push(H(c.lang==="en"?"Results":"Resultados", D.HeadingLevel.HEADING_1));
-  (R.bloques||[]).forEach(b => {
-    if(b.encabezado) kids.push(H(b.encabezado, D.HeadingLevel.HEADING_2));
-    (b.parrafos||[]).forEach(p => kids.push(P(p)));
-  });
-
-  (R.tablas||[]).forEach(x => {
-    const art = find(x.id); if(!art) return;
-    kids.push(new D.Paragraph({ children:[ new D.TextRun({text:`Tabla ${x.numero}. `, bold:true, font:"Times New Roman", size:22}), new D.TextRun({text:x.titulo||"", font:"Times New Roman", size:22}) ], spacing:{before:260, after:100} }));
-    const rows = art.html ? tableToRows(art.html) : art.text.split("\n").map(l => l.split(/\s{2,}|\t/));
-    if(rows.length){
-      const width = Math.max(...rows.map(r=>r.length));
-      kids.push(new D.Table({
-        width:{size:100, type:D.WidthType.PERCENTAGE},
-        rows: rows.map((r,i) => new D.TableRow({ children: Array.from({length:width}, (_,j) =>
-          new D.TableCell({ children:[ new D.Paragraph({ children:[new D.TextRun({text:String(r[j]||""), bold:i===0, font:"Times New Roman", size:20})] }) ] })
-        )}))
-      }));
-    }
-    if(x.nota) kids.push(P("Nota. " + x.nota, {run:{italics:true, size:20}}));
-  });
-
-  (R.figuras||[]).forEach(x => {
-    const art = find(x.id); if(!art || !art.png) return;
-    const maxW = 480, ratio = art.imgH && art.imgW ? art.imgH/art.imgW : 0.62;
-    const w = Math.min(maxW, art.imgW || maxW), hh = Math.round(w*ratio);
-    try{
-      kids.push(new D.Paragraph({ children:[ new D.ImageRun({ data: b64ToBytes(art.png), transformation:{width:w, height:hh} }) ], spacing:{before:260, after:80} }));
-    }catch(e){}
-    kids.push(new D.Paragraph({ children:[ new D.TextRun({text:`Figura ${x.numero}. `, bold:true, font:"Times New Roman", size:22}), new D.TextRun({text:x.leyenda||"", font:"Times New Roman", size:22}) ], spacing:{after:200} }));
-  });
-
-  const doc = new D.Document({ sections:[{ properties:{}, children:kids }] });
-  const blob = await D.Packer.toBlob(doc);
-  dl(blob, baseName()+"_resultados.docx");
-  }catch(err){
-    console.error(err);
-    alert("Ha fallado la generación del .docx: " + (err && err.message ? err.message : err));
-  }finally{
-    btn.disabled = false; btn.textContent = label;
+  if (!vis.length) {
+    list.innerHTML = `<div class="empty"><h3>Nada que mostrar con este filtro</h3><p>Cambia los filtros para ver el resto de comentarios.</p></div>`;
+    return;
   }
-};
+  list.innerHTML = vis.map(cardHTML).join('');
+  $$('#list .card').forEach(c => {
+    c.addEventListener('click', e => { if (e.target.closest('button')) return; selectFinding(c.dataset.id, 'list'); });
+  });
+  $$('#list [data-act]').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation();
+    const id = b.closest('.card').dataset.id, act = b.dataset.act;
+    const h = state.findings.find(x => x.id === id);
+    if (act === 'chat') return openChat(h);
+    if (act === 'fix') return openFix(h);
+    if (act === 'goto') return selectFinding(id, 'list', true);
+    h.estado = h.estado === act ? 'pendiente' : act;
+    persist(); refresh();
+  }));
+}
+
+function cardHTML(h) {
+  const conf = h.confianza != null ? Math.round(h.confianza * 100) + '% de confianza' : '';
+  return `<article class="card s-${h.severidad || 'baja'} st-${h.estado} ${h.aplicado ? 'applied' : ''} ${state.active === h.id ? 'active' : ''}" data-id="${h.id}">
+    <div class="meta">
+      <span class="sev ${h.severidad || 'baja'}">${{ alta: 'Alta', media: 'Media', baja: 'Baja' }[h.severidad] || 'Baja'}</span>
+      <span class="cat">${esc(h.categoria)}</span>
+      <span>${esc(h.section || '')}</span>
+    </div>
+    <h4>${esc(h.titulo)}</h4>
+    ${h.cita ? `<blockquote>${esc(h.cita)}</blockquote>` : ''}
+    <p>${esc(h.comentario)}</p>
+    ${h.sugerencia ? `<div class="fix"><strong>Sugerencia.</strong> ${esc(h.sugerencia)}</div>` : ''}
+    ${h.resuelto_en_revision ? `<div class="fix" style="background:#EDF6F0;color:var(--ok)"><strong>Revisión.</strong> ${esc(h.resuelto_en_revision)}</div>` : ''}
+    ${h.aplicado ? `<div class="fix done"><strong>Aplicado al documento.</strong> ${esc(h.aplicado.resumen)}
+      ${(h.aplicado.referencias || []).length ? `<ul class="refs">${h.aplicado.referencias.map(r => `<li>${esc(r)}</li>`).join('')}</ul>` : ''}</div>` : ''}
+    ${h.desanclado ? `<div class="fix"><strong>Aviso.</strong> El pasaje citado ha cambiado; este comentario ya no está anclado al texto.</div>` : ''}
+    <div class="acts">
+      ${h.start != null ? '<button class="btn sm" data-act="goto">Ver en el texto</button>' : '<span class="unanchored">Sin anclaje exacto</span>'}
+      ${h.aplicado ? '' : '<button class="btn sm" data-act="fix">Resolver en el documento</button>'}
+      <button class="btn sm" data-act="chat">Preguntar</button>
+      <button class="btn sm" data-act="hecho">${h.estado === 'hecho' ? 'Reabrir' : 'Resuelto'}</button>
+      <button class="btn sm" data-act="descartado">${h.estado === 'descartado' ? 'Reabrir' : 'Descartar'}</button>
+      ${conf ? `<span class="unanchored" style="margin-left:auto">${conf}${h.veces > 1 ? ' · ' + h.veces + ' lecturas' : ''}</span>` : ''}
+    </div>
+  </article>`;
+}
+
+function selectFinding(id, from, scroll) {
+  state.active = id;
+  $$('#sheet mark.f').forEach(m => m.classList.toggle('active', m.dataset.id === id));
+  $$('#list .card').forEach(c => c.classList.toggle('active', c.dataset.id === id));
+  if (from !== 'list' || scroll) {
+    const card = document.querySelector(`#list .card[data-id="${id}"]`);
+    if (card) card.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+  if (from !== 'doc') {
+    const m = document.querySelector(`#sheet mark[data-id="${id}"]`);
+    if (m) {
+      document.body.classList.remove('view-side');
+      m.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }
+}
+
+function refresh() { renderDoc(); renderFindings(); }
+/* ============================================================
+   8. Chat sobre un comentario
+   ============================================================ */
+let chatFinding = null, chatHistory = [];
+function openChat(h) {
+  chatFinding = h; chatHistory = [];
+  $('#chatlog').innerHTML = '';
+  $('#chatIn').value = '';
+  $('#dlgChat').showModal();
+  $('#chatIn').focus();
+}
+async function sendChat() {
+  const q = $('#chatIn').value.trim();
+  if (!q || !chatFinding) return;
+  $('#chatIn').value = '';
+  addMsg('u', q);
+  const c = state.doc.chunks.find(x => x.id === chatFinding.chunk);
+  const passage = c ? chunkText(state.doc, c) : '';
+  const sys = `Eres el revisor que escribió este comentario sobre el manuscrito. Respondes con precisión y brevedad, sin adular y sin ablandar el comentario si sigue siendo correcto. Si el autor demuestra que te equivocabas, lo reconoces sin rodeos. ${langLine()}
+
+Comentario:
+- Categoría: ${chatFinding.categoria}
+- Severidad: ${chatFinding.severidad}
+- Cita: "${chatFinding.cita}"
+- Comentario: ${chatFinding.comentario}
+- Sugerencia: ${chatFinding.sugerencia || '—'}
+
+Pasaje del manuscrito:
+${passage.slice(0, 12000)}`;
+  const bubble = addMsg('a', '…');
+  try {
+    const hist = chatHistory.slice(-6).map(m => `${m.r === 'u' ? 'Autor' : 'Revisor'}: ${m.t}`).join('\n');
+    const txt = await llm({ system: sys, user: (hist ? hist + '\n\n' : '') + 'Autor: ' + q, json: false, temp: 0.3, maxTokens: 800 });
+    bubble.textContent = txt;
+    chatHistory.push({ r: 'u', t: q }, { r: 'a', t: txt });
+  } catch (e) { bubble.textContent = 'No se pudo responder: ' + e.message; }
+}
+function addMsg(role, text) {
+  const d = document.createElement('div');
+  d.className = 'msg ' + role; d.textContent = text;
+  $('#chatlog').appendChild(d);
+  d.scrollIntoView({ block: 'nearest' });
+  return d;
+}
 
 /* ============================================================
-   IndexedDB
-============================================================ */
-let DB = null;
-function db(){
-  return new Promise((res, rej) => {
-    if(DB) return res(DB);
-    const r = indexedDB.open("narrativia", 1);
-    r.onupgradeneeded = () => { if(!r.result.objectStoreNames.contains("proyectos")) r.result.createObjectStore("proyectos", {keyPath:"id"}); };
-    r.onsuccess = () => { DB = r.result; res(DB); };
-    r.onerror = () => rej(r.error);
-  });
+   8b. Resolver un comentario: evidencia externa + corrección del texto
+   ============================================================ */
+let fixState = null;   // { h, a, b, original, fuentes, propuesta, resumen, referencias, nota }
+
+/* ---------- fuentes externas ---------- */
+function abstractFrom(inv) {
+  if (!inv) return '';
+  const out = [];
+  Object.entries(inv).forEach(([w, pos]) => pos.forEach(p => { out[p] = w; }));
+  return out.filter(Boolean).join(' ');
 }
-async function tx(mode, fn){ const d = await db(); return new Promise((res, rej) => { const t = d.transaction("proyectos", mode); const s = t.objectStore("proyectos"); const q = fn(s); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); }
-
-$("#btnSave").onclick = async () => {
-  syncEdits();
-  const id = S.projectId || ("p" + Date.now());
-  S.projectId = id;
-  const light = S.artifacts.map(a => ({...a, png: a.png ? a.png.slice(0,400000) : null}));
-  await tx("readwrite", s => s.put({ id, nbName:S.nbName, fecha:new Date().toISOString(), artifacts:light, result:S.result }));
-  $("#btnSave").textContent = "Guardado"; setTimeout(()=>$("#btnSave").textContent="Guardar proyecto", 1400);
-};
-$("#btnProj").onclick = async () => {
-  const all = await tx("readonly", s => s.getAll());
-  $("#projList").innerHTML = all.length ? all.sort((a,b)=>b.fecha.localeCompare(a.fecha)).map(p => `
-    <div style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)">
-      <div style="flex:1"><div style="font-family:var(--mono);font-size:13px">${esc(p.nbName)}</div>
-      <div class="hint">${new Date(p.fecha).toLocaleString("es-ES")} · ${p.artifacts.length} salidas</div></div>
-      <button class="btn sm" data-open="${p.id}">Abrir</button>
-      <button class="btn ghost sm" data-del="${p.id}">Borrar</button>
-    </div>`).join("") : `<p class="hint">Todavía no hay nada guardado. Redacta unos Resultados y pulsa «Guardar proyecto».</p>`;
-  $("#projList").querySelectorAll("[data-open]").forEach(b => b.onclick = async () => {
-    const p = await tx("readonly", s => s.get(b.dataset.open));
-    S.projectId = p.id; S.nbName = p.nbName; S.artifacts = p.artifacts; S.result = p.result;
-    renderNbInfo(); renderInv(); collectSourceNumbers();
-    $("#mProj").classList.remove("on");
-    if(S.result){ renderMs(); show("s4"); } else show("s2");
+function apaFromOA(w) {
+  const au = (w.authorships || []).map(a => a.author && a.author.display_name).filter(Boolean);
+  const names = au.length > 3 ? au.slice(0, 3).join(', ') + ' et al.' : au.join(', ');
+  const rev = (w.primary_location && w.primary_location.source && w.primary_location.source.display_name) || '';
+  const doi = (w.doi || '').replace('https://doi.org/', '');
+  return `${names || 'Autoría no disponible'} (${w.publication_year || 's.f.'}). ${w.title || ''}.${rev ? ' ' + rev + '.' : ''}${doi ? ' https://doi.org/' + doi : ''}`;
+}
+async function oaSearch(query, n = 5) {
+  const mail = cfg.mailto ? '&mailto=' + encodeURIComponent(cfg.mailto) : '';
+  const base = 'https://api.openalex.org/works?per_page=' + n + '&search=' + encodeURIComponent(query) + mail;
+  const sel = '&select=id,doi,title,publication_year,authorships,primary_location,cited_by_count,abstract_inverted_index';
+  let r = await fetch(base + sel);
+  if (!r.ok) r = await fetch(base);           // si la API rechaza el select, pide el registro completo
+  if (!r.ok) throw new Error('OpenAlex respondió ' + r.status);
+  const d = await r.json();
+  return (d.results || []).map(w => ({
+    fuente: 'OpenAlex',
+    titulo: w.title || '(sin título)',
+    detalle: [(w.publication_year || ''), (w.primary_location && w.primary_location.source && w.primary_location.source.display_name) || '',
+      (w.cited_by_count != null ? w.cited_by_count + ' citas' : '')].filter(Boolean).join(' · '),
+    url: w.doi || w.id,
+    resumen: abstractFrom(w.abstract_inverted_index).slice(0, 900),
+    cita: apaFromOA(w)
+  }));
+}
+async function tvSearch(query, n = 5) {
+  if (!S.tavily) throw new Error('falta la clave de Tavily (Ajustes)');
+  const r = await fetch('https://api.tavily.com/search', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + S.tavily },
+    body: JSON.stringify({ api_key: S.tavily, query, max_results: n, search_depth: 'advanced', include_answer: false })
   });
-  $("#projList").querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
-    await tx("readwrite", s => s.delete(b.dataset.del)); $("#btnProj").click();
-  });
-  $("#mProj").classList.add("on");
-};
+  if (!r.ok) throw new Error('Tavily respondió ' + r.status);
+  const d = await r.json();
+  return (d.results || []).map(x => ({
+    fuente: 'Tavily',
+    titulo: x.title || x.url,
+    detalle: (() => { try { return new URL(x.url).hostname; } catch (e) { return ''; } })(),
+    url: x.url,
+    resumen: (x.content || '').slice(0, 900),
+    cita: `${x.title || ''}. ${x.url}`
+  }));
+}
+async function fixQueries(h) {
+  const fallback = norm(h.titulo + ' ' + (h.cita || '')).split(' ').slice(0, 12).join(' ');
+  try {
+    const r = await llm({
+      system: `Conviertes un comentario de revisión de un manuscrito académico en consultas de búsqueda. Devuelves sólo JSON:
+{"academica":"consulta en inglés, 3-10 palabras clave, para buscar literatura científica","web":"consulta para un buscador web, en el idioma más útil para encontrar el dato"}
+No repitas el comentario entero; extrae el concepto, el método o el dato que hay que respaldar.`,
+      user: `Título del problema: ${h.titulo}\nComentario: ${h.comentario}\nSugerencia: ${h.sugerencia || ''}\nPasaje citado: "${(h.cita || '').slice(0, 400)}"\nSección: ${h.section || ''}`,
+      temp: 0, maxTokens: 200
+    });
+    return { oa: (r.academica || fallback).trim(), tv: (r.web || r.academica || fallback).trim() };
+  } catch (e) { return { oa: fallback, tv: fallback }; }
+}
+async function gatherEvidence(h) {
+  const mode = cfg.enrich || 'openalex';
+  if (mode === 'off') return [];
+  const q = await fixQueries(h);
+  const jobs = [];
+  if (mode === 'openalex' || mode === 'ambas') jobs.push(oaSearch(q.oa, 5).catch(e => { toast('OpenAlex: ' + e.message); return []; }));
+  if (mode === 'tavily' || mode === 'ambas') jobs.push(tvSearch(q.tv, 5).catch(e => { toast('Tavily: ' + e.message); return []; }));
+  const res = await Promise.all(jobs);
+  const all = [].concat.apply([], res);
+  all.forEach((f, i) => { f.id = 's' + i; f.usar = true; });
+  fixState.consultas = q;
+  return all;
+}
 
-loadCfgUI();
+/* ---------- diálogo ---------- */
+function renderFixSources() {
+  const box = $('#fixSrcBox');
+  const fs = fixState.fuentes || [];
+  if (!fs.length) { box.innerHTML = cfg.enrich === 'off' ? '' : '<div class="busy" style="margin-bottom:12px">Sin evidencia externa para este comentario.</div>'; return; }
+  box.innerHTML = `<div class="busy" style="margin-bottom:6px">Evidencia encontrada${fixState.consultas ? ` · consulta: «${esc(fixState.consultas.oa)}»` : ''}. Desmarca lo que no quieras que se use.</div>
+    <div class="srcs">` + fs.map(f => `<label class="src">
+      <input type="checkbox" data-src="${f.id}" ${f.usar ? 'checked' : ''}>
+      <span><b>${esc(f.titulo)}</b>
+        <span class="tag">${esc(f.fuente)}${f.detalle ? ' · ' + esc(f.detalle) : ''}</span>
+        <a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(String(f.url).slice(0, 80))}</a></span>
+    </label>`).join('') + '</div>';
+  $$('#fixSrcBox [data-src]').forEach(i => i.addEventListener('change', () => {
+    const f = fixState.fuentes.find(x => x.id === i.dataset.src); if (f) f.usar = i.checked;
+  }));
+}
+function diffWords(a, b) {
+  const A = a.split(/(\s+)/), B = b.split(/(\s+)/);
+  const n = A.length, m = B.length;
+  if (n * m > 900000) return `<del>${esc(a)}</del>\n<ins>${esc(b)}</ins>`;
+  const dp = Array.from({ length: n + 1 }, () => new Uint32Array(m + 1));
+  for (let i = n - 1; i >= 0; i--)
+    for (let j = m - 1; j >= 0; j--)
+      dp[i][j] = A[i] === B[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+  let i = 0, j = 0, out = '', buf = '', mode = null;
+  const flush = () => { if (buf) out += mode ? `<${mode}>${esc(buf)}</${mode}>` : esc(buf); buf = ''; };
+  const push = (t, md) => { if (md !== mode) { flush(); mode = md; } buf += t; };
+  while (i < n && j < m) {
+    if (A[i] === B[j]) { push(A[i], null); i++; j++; }
+    else if (dp[i + 1][j] >= dp[i][j + 1]) { push(A[i], 'del'); i++; }
+    else { push(B[j], 'ins'); j++; }
+  }
+  while (i < n) { push(A[i], 'del'); i++; }
+  while (j < m) { push(B[j], 'ins'); j++; }
+  flush();
+  return out;
+}
+function renderFixDiff() {
+  const nuevo = $('#fixText').value;
+  $('#fixDiff').innerHTML = diffWords(fixState.original, nuevo);
+}
+function blockSpan(h) {
+  const doc = state.doc;
+  const bs = doc.blocks.filter(b => b.end > h.start && b.start < h.end);
+  if (!bs.length) return null;
+  return { a: bs[0].start, b: bs[bs.length - 1].end };
+}
+async function openFix(h) {
+  if (!state.doc) return;
+  if (state.running) return toast('Espera a que termine la revisión en curso');
+  if (!S.key) return toast('Añade tu clave de OpenAI en Ajustes');
+  if (h.start == null) {
+    const a = anchor(buildIndex(state.doc.text), h.cita, 0, null);
+    if (!a) return toast('Este comentario no está anclado a ningún pasaje: no puedo aplicarlo automáticamente');
+    h.start = a.start; h.end = a.end; h.fuzzy = !!a.fuzzy;
+  }
+  const sp = blockSpan(h);
+  if (!sp) return toast('No encuentro el pasaje en el documento');
+
+  fixState = { h, a: sp.a, b: sp.b, original: state.doc.text.slice(sp.a, sp.b), fuentes: [], referencias: [], resumen: '', nota: '' };
+  $('#fixHead').innerHTML = `<b>${esc(h.titulo)}</b>${esc(h.comentario)}
+    ${h.sugerencia ? `<div style="margin-top:6px"><strong>Sugerencia del revisor.</strong> ${esc(h.sugerencia)}</div>` : ''}
+    ${h.cita ? `<blockquote>${esc(h.cita)}</blockquote>` : ''}`;
+  $('#fixSrcBox').innerHTML = '';
+  $('#fixDiff').innerHTML = '';
+  $('#fixText').value = fixState.original;
+  $('#fixNote').textContent = '';
+  $('#fixApply').disabled = true;
+  $('#dlgFix').showModal();
+
+  try {
+    if (cfg.enrich !== 'off') {
+      $('#fixNote').textContent = 'Buscando evidencia externa…';
+      fixState.fuentes = await gatherEvidence(h);
+      renderFixSources();
+    }
+    await proposeFix();
+  } catch (e) {
+    $('#fixNote').textContent = 'No se pudo preparar la corrección: ' + e.message;
+    $('#fixApply').disabled = false;
+  }
+}
+const FIX_PROMPT = `Eres el autor del manuscrito y estás corrigiendo un problema que ha señalado un revisor. Devuelves el pasaje reescrito, no un consejo.
+
+Reglas:
+1. Reescribe únicamente el pasaje que se te da, completo, en el mismo idioma, registro, notación y estructura de párrafos.
+2. Cambia lo mínimo imprescindible para que el problema deje de existir. No reescribas por estilo ni añadas relleno.
+3. No inventes datos, cifras, resultados ni referencias. Sólo puedes añadir una cita si aparece en la evidencia externa que se te proporciona, y la escribirás en el texto como (Autor, año).
+4. Si el problema no se puede resolver sin información que no tienes (un dato del experimento, una tabla, una decisión del autor), devuelve aplicable:false, deja el pasaje intacto salvo una marca [PENDIENTE: qué falta] en el punto exacto, y explica en nota qué necesitas.
+5. Conserva los saltos de párrafo del pasaje original salvo que el arreglo exija otra cosa.
+
+Responde sólo con JSON:
+{"aplicable":true,"texto_nuevo":"pasaje completo reescrito","resumen":"qué has cambiado, en una frase","referencias":["referencia completa que hay que añadir a la bibliografía"],"nota":"advertencia o qué debe comprobar el autor"}`;
+
+async function proposeFix() {
+  if (!fixState) return;
+  const h = fixState.h;
+  const usadas = (fixState.fuentes || []).filter(f => f.usar);
+  const ev = usadas.length ? usadas.map((f, i) =>
+    `[${i + 1}] ${f.cita}\n    Resumen: ${(f.resumen || '').slice(0, 700)}`).join('\n') : '(sin evidencia externa)';
+  $('#fixNote').textContent = 'Redactando la corrección…';
+  $('#fixApply').disabled = true;
+  try {
+    const r = await llm({
+      system: FIX_PROMPT + '\n' + langLine(),
+      user: `Manuscrito: ${state.doc.name}${state.doc.context ? ' · ' + state.doc.context : ''}
+Sección: ${h.section || ''}
+
+Comentario del revisor
+- Título: ${h.titulo}
+- Categoría: ${h.categoria}
+- Problema: ${h.comentario}
+- Sugerencia: ${h.sugerencia || '(sin sugerencia)'}
+- Cita marcada: "${h.cita || ''}"
+
+Evidencia externa disponible (sólo puedes citar de aquí):
+${ev}
+
+<<<PASAJE A REESCRIBIR>>>
+${fixState.original}
+<<<FIN>>>`,
+      temp: 0.15, maxTokens: Math.min(3000, 600 + Math.ceil(fixState.original.length / 2))
+    });
+    const nuevo = (r.texto_nuevo || '').trim();
+    fixState.resumen = r.resumen || '';
+    fixState.referencias = Array.isArray(r.referencias) ? r.referencias.filter(Boolean) : [];
+    fixState.nota = r.nota || '';
+    fixState.aplicable = r.aplicable !== false;
+    $('#fixText').value = nuevo || fixState.original;
+    renderFixDiff();
+    $('#fixNote').textContent = [
+      fixState.aplicable ? 'Propuesta lista.' : 'La IA no puede resolverlo sola:',
+      fixState.resumen, fixState.nota
+    ].filter(Boolean).join(' ');
+  } catch (e) {
+    $('#fixNote').textContent = 'Error al redactar la corrección: ' + e.message;
+  }
+  $('#fixApply').disabled = false;
+}
+
+/* ---------- edición del documento ---------- */
+function applyEdit(a, b, newText) {
+  const doc = state.doc;
+  const oldText = doc.text.slice(a, b);
+  const delta = newText.length - oldText.length;
+
+  const affected = doc.blocks.filter(x => x.end > a && x.start < b);
+  const i0 = doc.blocks.indexOf(affected[0]);
+  const i1 = doc.blocks.indexOf(affected[affected.length - 1]);
+  const oldIds = affected.map(x => x.id);
+  const modelo = affected[0];
+
+  doc.text = doc.text.slice(0, a) + newText + doc.text.slice(b);
+
+  // desplaza lo que va detrás
+  doc.blocks.forEach((x, i) => { if (i > i1) { x.start += delta; x.end += delta; } });
+  doc.chunks.forEach(c => { if (c.start >= b) c.start += delta; if (c.end >= b) c.end += delta; });
+
+  // reconstruye los bloques del tramo editado
+  const nuevos = [];
+  let off = 0;
+  newText.split(/(\n\s*\n)/).forEach(piece => {
+    if (!/^\n\s*\n$/.test(piece)) {
+      const t = piece.trim();
+      if (t) {
+        const lead = piece.length - piece.replace(/^\s+/, '').length;
+        const lines = t.split('\n');
+        const head = lines.length <= 2 && isHeadingLine(lines[0]);
+        nuevos.push({
+          id: 'e' + uid(),
+          kind: head ? 'head' : (modelo.kind === 'tabular' ? 'tabular' : 'p'),
+          level: head ? headingLevel(lines[0]) : 0,
+          section: modelo.section,
+          text: t, start: a + off + lead, end: a + off + lead + t.length
+        });
+      }
+    }
+    off += piece.length;
+  });
+  doc.blocks.splice(i0, i1 - i0 + 1, ...nuevos);
+
+  // los pasajes (chunks) apuntan a ids de bloque: sustituye los antiguos
+  doc.chunks.forEach(c => {
+    if (!c.blocks.some(id => oldIds.includes(id))) return;
+    const keep = c.blocks.filter(id => !oldIds.includes(id));
+    const at = c.blocks.findIndex(id => oldIds.includes(id));
+    c.blocks = keep.slice(0, at).concat(nuevos.map(x => x.id), keep.slice(at));
+  });
+
+  // reancla los comentarios
+  const idx = buildIndex(doc.text);
+  state.findings.forEach(f => {
+    if (f.start == null) return;
+    if (f.start >= b) { f.start += delta; f.end += delta; return; }
+    if (f.end <= a) return;
+    const re = anchor(idx, f.cita, Math.max(0, a - 4000), Math.min(doc.text.length, a + newText.length + 4000)) || anchor(idx, f.cita, 0, null);
+    if (re) { f.start = re.start; f.end = re.end; f.desanclado = false; }
+    else { f.start = null; f.end = null; f.desanclado = true; }
+  });
+  return { a, b: a + newText.length, prev: oldText, delta };
+}
+
+async function applyFix() {
+  if (!fixState) return;
+  const nuevo = $('#fixText').value;
+  const h = fixState.h;
+  if (nuevo.trim() === fixState.original.trim()) {
+    toast('El texto no ha cambiado');
+    return;
+  }
+  const ed = applyEdit(fixState.a, fixState.b, nuevo);
+  const usadas = (fixState.fuentes || []).filter(f => f.usar).map(f => ({ fuente: f.fuente, titulo: f.titulo, url: f.url, cita: f.cita }));
+  h.start = ed.a; h.end = ed.b; h.desanclado = false;
+  h.estado = 'hecho';
+  h.aplicado = {
+    fecha: Date.now(),
+    resumen: fixState.resumen || 'Pasaje reescrito para atender el comentario.',
+    antes: fixState.original,
+    despues: nuevo,
+    referencias: fixState.referencias || [],
+    fuentes: usadas,
+    nota: fixState.nota || ''
+  };
+  state.edits.push({ a: ed.a, b: ed.b, prev: ed.prev, findingId: h.id, resumen: h.aplicado.resumen, ts: Date.now() });
+  await persist();
+  $('#dlgFix').close();
+  fixState = null;
+  updateDocMeta();
+  refresh();
+  toast('Cambio aplicado al documento y comentario marcado como resuelto');
+}
+
+async function undoLastEdit() {
+  const e = state.edits.pop();
+  if (!e) return;
+  applyEdit(e.a, e.b, e.prev);
+  const h = state.findings.find(x => x.id === e.findingId);
+  if (h) { delete h.aplicado; h.estado = 'pendiente'; }
+  await persist();
+  updateDocMeta();
+  refresh();
+  toast('Cambio deshecho');
+}
+
+function updateDocMeta() {
+  const n = state.edits.length;
+  $('#btnUndo').style.display = n ? '' : 'none';
+  if (state.doc) $('#docname').textContent = state.doc.name + (n ? ` · ${n} cambio${n > 1 ? 's' : ''} aplicado${n > 1 ? 's' : ''}` : '');
+}
+
+/* ============================================================
+   9. Exportación
+   ============================================================ */
+function download(name, mime, content) {
+  const b = new Blob([content], { type: mime });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function exportAs(kind) {
+  const vis = state.findings.filter(visible);
+  const doc = state.doc;
+  const stamp = new Date().toLocaleString('es-ES');
+  const base = (doc.name || 'manuscrito').replace(/\.[^.]+$/, '');
+
+  if (kind === 'json') {
+    download(base + '-revision.json', 'application/json',
+      JSON.stringify({ documento: doc.name, fecha: stamp, modelo: cfg.model, uso: state.usage, comentarios: vis }, null, 2));
+    return;
+  }
+  const bySec = {};
+  vis.forEach(h => { (bySec[h.section || 'Documento'] = bySec[h.section || 'Documento'] || []).push(h); });
+
+  if (kind === 'clean') {
+    download(base + '-corregido.md', 'text/markdown', doc.text);
+    return;
+  }
+
+  if (kind === 'changes') {
+    const ap = state.findings.filter(h => h.aplicado);
+    if (!ap.length) { toast('Todavía no has aplicado ningún cambio al documento'); return; }
+    const body = ap.map((h, i) =>
+      `### ${i + 1}. ${h.titulo}\n\n- Categoría: ${h.categoria} · Severidad: ${h.severidad}\n- Cambio: ${h.aplicado.resumen}\n` +
+      (h.aplicado.referencias.length ? `- Referencias añadidas:\n${h.aplicado.referencias.map(r => '  - ' + r).join('\n')}\n` : '') +
+      (h.aplicado.fuentes.length ? `- Fuentes consultadas:\n${h.aplicado.fuentes.map(f => `  - [${f.fuente}] ${f.titulo} — ${f.url}`).join('\n')}\n` : '') +
+      `\n**Antes.**\n\n> ${h.aplicado.antes.replace(/\n/g, '\n> ')}\n\n**Después.**\n\n> ${h.aplicado.despues.replace(/\n/g, '\n> ')}\n`).join('\n');
+    download(base + '-cambios.md', 'text/markdown',
+      `# Registro de cambios aplicados — ${doc.name}\n\nGenerado por RefinIA el ${stamp}. ${ap.length} cambios aplicados al texto.\n\n${body}`);
+    return;
+  }
+
+  if (kind === 'letter') {
+    const body = vis.filter(h => h.estado !== 'descartado').map((h, i) =>
+      `**Comentario ${i + 1} (${h.severidad}, ${h.categoria}).** ${h.comentario}\n\n> ${h.cita}\n\n*Respuesta de los autores:* ${h.aplicado ? `Hemos modificado el texto. ${h.aplicado.resumen}${h.aplicado.referencias.length ? ' Se han añadido las referencias correspondientes.' : ''}` : (h.estado === 'hecho' ? 'Hemos corregido este punto. [pendiente de detallar]' : '[pendiente de redactar]')}\n`).join('\n');
+    download(base + '-carta-respuesta.md', 'text/markdown',
+      `# Carta de respuesta a la revisión\n\nManuscrito: ${doc.name}\nFecha: ${stamp}\n\nAgradecemos los comentarios recibidos. A continuación respondemos a cada uno de ellos.\n\n${body}`);
+    return;
+  }
+
+  const md = `# Informe de revisión — ${doc.name}\n\nGenerado por RefinIA el ${stamp} con ${cfg.model}. ${vis.length} comentarios (${vis.filter(h => h.severidad === 'alta').length} de severidad alta).\n\n` +
+    Object.entries(bySec).map(([sec, hs]) =>
+      `## ${sec}\n\n` + hs.map(h =>
+        `### ${h.titulo}\n\n- Severidad: **${h.severidad}** · Categoría: ${h.categoria}${h.confianza != null ? ` · Confianza: ${Math.round(h.confianza * 100)}%` : ''}\n\n> ${h.cita}\n\n${h.comentario}\n\n${h.sugerencia ? `**Sugerencia.** ${h.sugerencia}\n` : ''}`
+      ).join('\n')).join('\n');
+
+  if (kind === 'md') { download(base + '-revision.md', 'text/markdown', md); return; }
+
+  const html = `<html xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><style>
+    body{font-family:Georgia,serif;font-size:11pt;line-height:1.45}
+    h1{font-size:18pt} h2{font-size:14pt;border-bottom:1px solid #999} h3{font-size:12pt}
+    blockquote{border-left:3px solid #bbb;margin-left:0;padding-left:10px;color:#444;font-style:italic}
+    .meta{color:#666;font-size:9.5pt}</style></head><body>` +
+    md.replace(/^# (.*)$/gm, '<h1>$1</h1>').replace(/^## (.*)$/gm, '<h2>$1</h2>')
+      .replace(/^### (.*)$/gm, '<h3>$1</h3>').replace(/^> (.*)$/gm, '<blockquote>$1</blockquote>')
+      .replace(/^- (.*)$/gm, '<p class="meta">$1</p>')
+      .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n{2,}/g, '<p>') + '</body></html>';
+  download(base + '-revision.doc', 'application/msword', html);
+}
+
+/* ============================================================
+   10. Comprobación de la versión revisada
+   ============================================================ */
+let revText = null;
+async function runRevisionCheck() {
+  if (!revText) return;
+  const log = $('#revLog'); log.style.display = ''; log.textContent = 'Segmentando la nueva versión…\n';
+  const seg = segment(revText);
+  const chunks = chunkify(seg.blocks, cfg.chunkWords);
+  const open = state.findings.filter(h => h.estado !== 'descartado');
+  if (!open.length) { log.textContent += 'No hay comentarios abiertos que comprobar.\n'; return; }
+
+  // empareja cada comentario con el pasaje más parecido de la nueva versión
+  const jobs = [];
+  open.forEach(h => {
+    const q = new Set(norm((h.cita || '') + ' ' + (h.titulo || '')).split(' ').filter(w => w.length > 3));
+    let best = null, bestScore = 0;
+    chunks.forEach(c => {
+      const t = new Set(norm(c.blocks.map(id => seg.blocks.find(b => b.id === id).text).join(' ')).split(' '));
+      let s = 0; q.forEach(w => { if (t.has(w)) s++; });
+      if (s > bestScore) { bestScore = s; best = c; }
+    });
+    if (best) jobs.push({ h, text: best.blocks.map(id => seg.blocks.find(b => b.id === id).text).join('\n\n') });
+  });
+
+  log.textContent += `Comprobando ${jobs.length} comentarios…\n`;
+  state.abort = false;
+  await pool(jobs, async j => {
+    const r = await llm({
+      system: `Comprueba si un comentario de revisión ha sido atendido en la nueva versión del manuscrito. Sé estricto: sólo se considera resuelto si el texto nuevo corrige realmente el problema, no si simplemente lo menciona o lo reformula. ${langLine()}
+Responde JSON: {"estado":"resuelto|parcial|sin_cambios|no_localizado","explicacion":"una o dos frases"}`,
+      user: `Comentario:\n- ${j.h.titulo}\n- ${j.h.comentario}\n- Cita de la versión anterior: "${j.h.cita}"\n\nPasaje correspondiente de la nueva versión:\n${j.text.slice(0, 9000)}`,
+      temp: 0, maxTokens: 400
+    });
+    j.h.revision = r.estado;
+    j.h.resuelto_en_revision = (r.estado === 'resuelto' ? 'Resuelto. ' : r.estado === 'parcial' ? 'Parcialmente atendido. ' : r.estado === 'sin_cambios' ? 'Sin cambios. ' : 'No localizado en la nueva versión. ') + (r.explicacion || '');
+    if (r.estado === 'resuelto') j.h.estado = 'hecho';
+    log.textContent += `· ${r.estado.padEnd(13)} ${j.h.titulo.slice(0, 60)}\n`;
+    log.scrollTop = log.scrollHeight;
+    return true;
+  }, cfg.conc);
+
+  const res = open.filter(h => h.revision === 'resuelto').length;
+  log.textContent += `\n${res} de ${jobs.length} comentarios quedan resueltos en la nueva versión.\n`;
+  await persist(); refresh();
+}
+
+/* ============================================================
+   11. Ajustes, carga de documentos e inicialización
+   ============================================================ */
+function openSettings() {
+  $('#sKey').value = S.key;
+  $('#sModel').value = cfg.model; $('#sBase').value = cfg.base;
+  $('#sConc').value = cfg.conc; $('#sChunk').value = cfg.chunkWords; $('#sConf').value = cfg.minConf;
+  $('#sEnrich').value = cfg.enrich || DEF.enrich; $('#sMail').value = cfg.mailto || ''; $('#sTavily').value = S.tavily;
+  $('#dlgSettings').showModal();
+}
+function saveSettings() {
+  S.key = $('#sKey').value.trim();
+  cfg = {
+    model: $('#sModel').value.trim() || DEF.model,
+    base: $('#sBase').value.trim() || DEF.base,
+    conc: Math.max(1, Math.min(16, +$('#sConc').value || DEF.conc)),
+    chunkWords: Math.max(200, Math.min(2000, +$('#sChunk').value || DEF.chunkWords)),
+    minConf: Math.max(0, Math.min(1, +$('#sConf').value || DEF.minConf)),
+    enrich: $('#sEnrich').value || DEF.enrich,
+    mailto: $('#sMail').value.trim()
+  };
+  S.tavily = $('#sTavily').value.trim();
+  S.save(cfg);
+  $('#dlgSettings').close();
+  updateKeyWarn(); updateEstimate();
+  toast('Ajustes guardados');
+}
+
+let pending = null; // {name,text}
+function loadIntoApp(name, text) {
+  if (!text || words(text) < 60) { toast('El texto es demasiado corto para revisarlo'); return; }
+  pending = { name, text };
+  $('#paste').value = text.length > 200000 ? text.slice(0, 200000) : text;
+  $('#docname').textContent = name;
+  updateEstimate();
+  $('#btnRun').disabled = !S.key;
+}
+
+function updateEstimate() {
+  const text = pending ? pending.text : $('#paste').value;
+  const est = $('#estimate');
+  if (!text || words(text) < 60) { est.textContent = ''; $('#btnRun').disabled = true; return; }
+  const seg = segment(text);
+  const chunks = chunkify(seg.blocks, cfg.chunkWords);
+  const lenses = LENSES.filter(l => l.on).length;
+  const depth = $('#depth').value;
+  const samples = depth === 'profunda' ? 2 : 1;
+  const calls = chunks.length * (1 + lenses * samples) + 2 + (depth === 'rapida' ? 0 : chunks.length);
+  const inTok = words(text) * 1.4 * (1 + lenses * samples) + calls * 400;
+  est.textContent = `${words(text).toLocaleString('es-ES')} palabras · ${chunks.length} pasajes · ${lenses} lentes · ≈${calls} llamadas · coste estimado ≈${estimateCost(inTok, calls * 350)} $ con ${cfg.model}`;
+  $('#btnRun').disabled = !S.key;
+}
+function updateKeyWarn() {
+  $('#keywarn').textContent = S.key ? '' : 'Necesitas una clave de API de OpenAI (Ajustes) para ejecutar la revisión.';
+}
+
+async function startReview() {
+  const text = pending ? pending.text : $('#paste').value.trim();
+  const name = pending ? pending.name : 'Manuscrito pegado';
+  const seg = segment(text);
+  state.doc = {
+    id: uid(), name, createdAt: Date.now(),
+    text: seg.text, blocks: seg.blocks,
+    chunks: chunkify(seg.blocks, cfg.chunkWords),
+    context: $('#ctx').value.trim()
+  };
+  state.findings = [];
+  state.edits = [];
+  $('#docname').textContent = name;
+  $('#btnExport').style.display = ''; $('#btnRevision').style.display = '';
+  renderDoc(); renderFindings();
+  await runReview();
+}
+
+async function renderRecent() {
+  let all = [];
+  try { all = await DB.all(); } catch (e) { return; }
+  const box = $('#recent');
+  if (!all || !all.length) { box.innerHTML = ''; return; }
+  all.sort((a, b) => b.updatedAt - a.updatedAt);
+  box.innerHTML = '<h3>Revisiones guardadas en este navegador</h3>' + all.slice(0, 8).map(d =>
+    `<a href="#" data-id="${d.id}">${esc(d.name)} <span>${(d.findings || []).length} comentarios · ${new Date(d.updatedAt).toLocaleDateString('es-ES')}</span></a>`).join('');
+  $$('#recent a').forEach(a => a.addEventListener('click', async e => {
+    e.preventDefault();
+    const rec = await DB.get(a.dataset.id);
+    if (!rec) return;
+    state.doc = { id: rec.id, name: rec.name, createdAt: rec.createdAt, text: rec.text, blocks: rec.blocks, chunks: rec.chunks, context: rec.context };
+    state.findings = rec.findings || [];
+    state.usage = rec.usage || { in: 0, out: 0, calls: 0 };
+    state.edits = [];
+    $('#docname').textContent = rec.name;
+    $('#btnExport').style.display = ''; $('#btnRevision').style.display = '';
+    refresh();
+  }));
+}
+
+/* ---------- arranque ---------- */
+function init() {
+  // lentes
+  $('#lenses').innerHTML = LENSES.map(l => `<label class="lens">
+    <input type="checkbox" data-lens="${l.id}" ${l.on ? 'checked' : ''}>
+    <span><b>${l.name}</b><small>${l.desc}</small></span></label>`).join('');
+  $$('#lenses input').forEach(i => i.addEventListener('change', () => {
+    const l = LENSES.find(x => x.id === i.dataset.lens); l.on = i.checked; updateEstimate();
+  }));
+
+  $('#btnFile').addEventListener('click', () => $('#file').click());
+  $('#file').addEventListener('change', async e => {
+    const f = e.target.files[0]; if (!f) return;
+    toast('Leyendo el archivo…');
+    try { const r = await readFile(f); loadIntoApp(r.name, r.text); toast('Archivo cargado'); }
+    catch (err) { toast('No se pudo leer: ' + err.message); }
+  });
+  const drop = $('#drop');
+  ['dragover', 'dragenter'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', async e => {
+    const f = e.dataTransfer.files[0]; if (!f) return;
+    try { const r = await readFile(f); loadIntoApp(r.name, r.text); toast('Archivo cargado'); }
+    catch (err) { toast('No se pudo leer: ' + err.message); }
+  });
+  $('#paste').addEventListener('input', () => { pending = null; updateEstimate(); });
+  $('#depth').addEventListener('change', updateEstimate);
+
+  $('#btnRun').addEventListener('click', startReview);
+  $('#btnNew').addEventListener('click', () => {
+    state.doc = null; state.findings = []; state.edits = []; pending = null;
+    $('#btnUndo').style.display = 'none';
+    $('#sheetHost').innerHTML = ''; $('#start').style.display = '';
+    $('#docname').textContent = ''; $('#spine').innerHTML = '';
+    $('#btnExport').style.display = 'none'; $('#btnRevision').style.display = 'none';
+    renderFindings(); renderRecent();
+  });
+  $('#btnCancel').addEventListener('click', () => { state.abort = true; toast('Deteniendo la revisión…'); });
+  $('#btnSettings').addEventListener('click', openSettings);
+  $('#sSave').addEventListener('click', saveSettings);
+  $('#btnExport').addEventListener('click', () => $('#dlgExport').showModal());
+  $$('[data-exp]').forEach(b => b.addEventListener('click', () => { exportAs(b.dataset.exp); $('#dlgExport').close(); }));
+  $('#btnUndo').addEventListener('click', undoLastEdit);
+  $('#fixSearch').addEventListener('click', async () => {
+    if (!fixState) return;
+    $('#fixNote').textContent = 'Buscando evidencia externa…';
+    try { fixState.fuentes = await gatherEvidence(fixState.h); renderFixSources(); $('#fixNote').textContent = `${fixState.fuentes.length} resultados.`; }
+    catch (e) { $('#fixNote').textContent = 'No se pudo buscar: ' + e.message; }
+  });
+  $('#fixRegen').addEventListener('click', proposeFix);
+  $('#fixApply').addEventListener('click', applyFix);
+  $('#fixText').addEventListener('input', () => { if (fixState) renderFixDiff(); });
+  $('#chatSend').addEventListener('click', sendChat);
+  $('#chatIn').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) sendChat(); });
+  $$('[data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
+
+  $('#btnRevision').addEventListener('click', () => $('#dlgRevision').showModal());
+  $('#btnFile2').addEventListener('click', () => $('#file2').click());
+  $('#file2').addEventListener('change', async e => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = await readFile(f); revText = r.text; $('#revRun').disabled = false;
+    $('#revLog').style.display = ''; $('#revLog').textContent = `Cargado ${r.name} (${words(r.text)} palabras).\n`;
+  });
+  const drop2 = $('#drop2');
+  ['dragover', 'dragenter'].forEach(ev => drop2.addEventListener(ev, e => { e.preventDefault(); drop2.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev => drop2.addEventListener(ev, e => { e.preventDefault(); drop2.classList.remove('over'); }));
+  drop2.addEventListener('drop', async e => {
+    const f = e.dataTransfer.files[0]; if (!f) return;
+    const r = await readFile(f); revText = r.text; $('#revRun').disabled = false;
+    $('#revLog').style.display = ''; $('#revLog').textContent = `Cargado ${r.name} (${words(r.text)} palabras).\n`;
+  });
+  $('#revRun').addEventListener('click', runRevisionCheck);
+
+  $('#tabDoc').addEventListener('click', () => { document.body.classList.remove('view-side'); $('#tabDoc').setAttribute('aria-pressed', 'true'); $('#tabSide').setAttribute('aria-pressed', 'false'); });
+  $('#tabSide').addEventListener('click', () => { document.body.classList.add('view-side'); $('#tabDoc').setAttribute('aria-pressed', 'false'); $('#tabSide').setAttribute('aria-pressed', 'true'); });
+
+  $('#docpane').addEventListener('scroll', syncSpineView, { passive: true });
+  window.addEventListener('beforeunload', e => { if (state.running) { e.preventDefault(); e.returnValue = ''; } });
+
+  updateKeyWarn(); renderFindings(); renderRecent();
+  if (!S.key) setTimeout(() => toast('Añade tu clave de OpenAI en Ajustes para empezar'), 700);
+}
+init();
+
+
 </script>
 </body>
 </html>
