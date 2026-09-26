@@ -1,6 +1,7 @@
 cff-version: 1.2.0
 message: "Si usas este software, cítalo con estos metadatos."
 title: "RefinIA"
+abstract: "Revisión de manuscritos académicos con seis lentes de lectura y un módulo de exactitud: valores p recalculados, coherencia de porcentajes e intervalos, referencias verificadas en OpenAlex y Crossref con detección de retractaciones, y afirmaciones contrastadas con el resumen de la fuente citada."
 type: software
 authors:
   - family-names: "Borrás Rocher"
@@ -8,8 +9,15 @@ authors:
     affiliation: "Universidad Miguel Hernández de Elche"
     orcid: "https://orcid.org/0000-0002-5519-4573"
 doi: "10.5281/zenodo.22215864"
-version: "1.0.0"
-date-released: "2026-08-31"
+version: "2.0.0"
+date-released: "2026-09-26"
 url: "https://fborrasumh.github.io/refinia/"
 repository-code: "https://github.com/fborrasumh/refinia"
 license: MIT
+keywords:
+  - "revisión de manuscritos"
+  - "integridad científica"
+  - "statcheck"
+  - "verificación de referencias"
+  - "OpenAlex"
+  - "inteligencia artificial"
