@@ -58,389 +58,887 @@
   };
 })();
 </script>
-
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RefinIA · Verificación de manuscritos</title>
-<meta name="description" content="Verificación independiente de manuscritos académicos: detecta errores de exactitud, razonamiento, consistencia interna y referencias antes de enviar el trabajo.">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RefinIA · Revisión y verificación de manuscritos</title>
+<meta name="description" content="Revisa tu manuscrito antes que el revisor: lentes de lectura, estadística recalculada, referencias verificadas en OpenAlex y afirmaciones contrastadas con sus fuentes.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --canvas:#E7EAEE;
-  --paper:#FFFFFF;
-  --ink:#12161C;
-  --ink-2:#4E5765;
-  --ink-3:#7C8695;
-  --rule:#D5DAE1;
-  --rule-soft:#E8ECF1;
-  --accent:#1B3FA0;
-  --accent-soft:#E6EBF8;
-  --alta:#A81E22;
-  --media:#8F6100;
-  --baja:#2C6E8E;
-  --ok:#2E6B45;
-  --alta-bg:#FBE9E9;
-  --media-bg:#FAF1DF;
-  --baja-bg:#E6F0F5;
-  --shadow:0 1px 2px rgba(18,22,28,.06), 0 8px 24px rgba(18,22,28,.07);
-  --sans:"IBM Plex Sans", system-ui, -apple-system, Segoe UI, sans-serif;
-  --serif:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --tinta:#0F2237; --acero:#2E4B6B; --acero-claro:#7C93AC; --gris:#5D7691;
+  --papel:#F3F6FA; --blanco:#FFFFFF; --linea:#D8E0E9; --linea-2:#E8EEF4;
+  --brasa:#E4572E; --brasa-osc:#C9441F; --brasa-suave:#FDEBE4;
+  --forjado:#0E7C6B; --forjado-suave:#E0F3EE; --aviso:#8A3617;
+  --c-ctx:#1F6FB2; --c-comp:#6B4FD8; --c-rda:#0E8C7A; --c-tema:#C98200; --c-eval:#E4572E; --c-final:#2E4B6B;
+  --sombra:0 1px 0 rgba(15,34,55,.05), 0 14px 34px -22px rgba(15,34,55,.45);
+  --sombra-alta:0 2px 0 rgba(15,34,55,.04), 0 22px 50px -24px rgba(15,34,55,.55);
+  --r:14px;
+  --display:"Bricolage Grotesque",Georgia,serif;
+  --texto:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,monospace;
 }
 *{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;background:var(--canvas);color:var(--ink);
-  font-family:var(--sans);font-size:15px;line-height:1.5;
-  -webkit-font-smoothing:antialiased;
-}
-button,input,select,textarea{font:inherit;color:inherit}
-button{cursor:pointer}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+html,body{margin:0;padding:0}
+body{background:var(--papel);color:var(--tinta);font-family:var(--texto);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;padding-bottom:84px}
+a{color:var(--acero)}
+:focus-visible{outline:3px solid var(--brasa);outline-offset:2px;border-radius:6px}
+.hidden{display:none!important}
+svg.i{width:1.15em;height:1.15em;vertical-align:-.2em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+code{font-family:var(--mono);font-size:.85em;background:var(--linea-2);padding:1px 5px;border-radius:5px}
 
-/* ---------- barra superior ---------- */
-.top{
-  position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:14px;
-  padding:0 16px;height:56px;background:var(--paper);border-bottom:1px solid var(--rule);
+/* Barra superior */
+.topbar{position:sticky;top:0;z-index:40;background:var(--tinta);color:#EAF1F7;box-shadow:0 6px 24px -14px rgba(0,0,0,.6)}
+.tb-in{max-width:1180px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:14px}
+.logo{background:none;border:0;color:#fff;font-family:var(--display);font-weight:800;font-size:24px;letter-spacing:-.03em;cursor:pointer;padding:2px 4px;display:flex;align-items:center;gap:8px}
+.logo em{font-style:normal;color:var(--brasa)}
+.logo .anv{width:30px;height:30px;border-radius:9px;background:var(--brasa);display:grid;place-items:center;color:#fff}
+.stepper{flex:1;display:flex;align-items:center;justify-content:center;min-width:0}
+.sdot{display:flex;align-items:center;gap:7px;background:none;border:0;color:#8FA7BE;font:600 13px var(--texto);padding:6px;cursor:pointer;border-radius:10px;white-space:nowrap}
+.sdot:disabled{cursor:not-allowed;opacity:.45}
+.sdot .n{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:2px solid #3E5C7D;font-size:12px;color:#A9C0D4;transition:all .2s}
+.sdot .n svg{width:14px;height:14px}
+.sdot[data-state="done"] .n{background:var(--forjado);border-color:var(--forjado);color:#fff}
+.sdot[data-state="now"]{color:#fff}
+.sdot[data-state="now"] .n{background:var(--brasa);border-color:var(--brasa);color:#fff;box-shadow:0 0 0 4px rgba(228,87,46,.25)}
+.sdot:not(:disabled):hover{background:rgba(255,255,255,.06)}
+.sline{flex:0 1 26px;height:2px;background:#2F4A68;min-width:6px}
+.sline.on{background:var(--forjado)}
+.tb-tools{display:flex;gap:6px}
+.tb-btn{background:transparent;border:1px solid #3E5C7D;color:#C9D8E6;border-radius:9px;padding:6px 10px;font:600 13px var(--texto);cursor:pointer;display:flex;align-items:center;gap:6px}
+.tb-btn:hover{border-color:var(--brasa);color:#fff}
+.progress{height:4px;background:#1E3550}
+.progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brasa),#F59E0B);transition:width .4s}
+@media(max-width:960px){.sdot .lbl{display:none}.sdot[data-state="now"] .lbl{display:inline}}
+@media(max-width:720px){
+  .tb-in{flex-wrap:wrap;gap:8px}
+  .stepper{order:3;flex-basis:100%;justify-content:space-between}
+  .sdot[data-state="now"] .lbl{display:none}
+  .tb-btn .lbl{display:none}
 }
-.mark{display:flex;align-items:baseline;gap:8px;font-weight:600;letter-spacing:-.01em}
-.mark b{font-family:var(--serif);font-size:20px;font-weight:600}
-.mark span{color:var(--ink-3);font-size:12px}
-.docname{
-  flex:1;min-width:0;font-size:14px;color:var(--ink-2);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-.btn{
-  border:1px solid var(--rule);background:var(--paper);border-radius:6px;
-  padding:7px 12px;font-size:13.5px;font-weight:500;color:var(--ink);
-}
-.btn:hover{background:#F5F7FA}
-.btn:disabled{opacity:.45;cursor:not-allowed}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-.btn.primary:hover{background:#16358A}
-.btn.ghost{border-color:transparent;background:transparent;color:var(--ink-2)}
-.btn.ghost:hover{background:#F0F3F7;color:var(--ink)}
-.btn.sm{padding:4px 9px;font-size:12.5px}
 
-/* ---------- progreso ---------- */
-.progress{display:none;flex-direction:column;gap:4px;min-width:230px}
-.progress.on{display:flex}
-.progress .bar{height:4px;background:var(--rule-soft);border-radius:2px;overflow:hidden}
-.progress .bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .25s ease}
-.progress small{font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+/* Pantallas */
+main{max-width:1180px;margin:0 auto;padding:26px 16px 40px}
+.screen{display:none}
+.screen.on{display:block}
+@media(prefers-reduced-motion:no-preference){.screen.on{animation:rise .35s cubic-bezier(.2,.7,.3,1) both}@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}}
+.sh{display:flex;gap:18px;align-items:flex-start;margin:4px 0 22px}
+.sh-ico{width:64px;height:64px;border-radius:18px;background:var(--c,var(--brasa));color:#fff;display:grid;place-items:center;flex:none;box-shadow:0 12px 24px -14px var(--c,var(--brasa))}
+.sh-ico svg{width:32px;height:32px}
+.sh-step{font:600 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--acero-claro);margin:4px 0}
+.sh h2{font-family:var(--display);font-weight:800;font-size:clamp(26px,3.6vw,38px);letter-spacing:-.025em;line-height:1.05;margin:0 0 6px}
+.sh-lede{margin:0;color:var(--gris);font-size:16.5px;max-width:70ch}
+@media(max-width:600px){.sh-ico{width:48px;height:48px;border-radius:14px}.sh-ico svg{width:24px;height:24px}}
 
-/* ---------- estructura ---------- */
-.wrap{display:grid;grid-template-columns:minmax(0,1fr) 18px 400px;height:calc(100vh - 56px)}
-.docpane{overflow:auto;padding:28px 0 120px}
-.sheet{
-  max-width:760px;margin:0 auto;background:var(--paper);
-  border:1px solid var(--rule);border-radius:2px;box-shadow:var(--shadow);
-  padding:56px 64px 72px;
-}
-.sheet h1,.sheet h2,.sheet h3{font-family:var(--serif);font-weight:600;line-height:1.25;margin:2em 0 .6em}
-.sheet h1{font-size:27px;margin-top:0}
-.sheet h2{font-size:21px}
-.sheet h3{font-size:17.5px}
-.sheet p{
-  font-family:var(--serif);font-size:17px;line-height:1.68;margin:0 0 1.05em;
-  max-width:68ch;hyphens:auto;
-}
-.sheet p.tabular{font-family:var(--sans);font-size:14px;line-height:1.5;white-space:pre-wrap;color:var(--ink-2)}
+.card{background:var(--blanco);border:1px solid var(--linea);border-radius:var(--r);box-shadow:var(--sombra);padding:20px;margin-bottom:18px}
+.card h3{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:-.01em;margin:0 0 4px;display:flex;align-items:center;gap:9px}
+.card h3 .num{width:26px;height:26px;border-radius:8px;background:var(--tinta);color:#fff;font:700 13px var(--mono);display:grid;place-items:center}
+.card .sub{margin:0 0 14px;color:var(--gris);font-size:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cols{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:20px;align-items:start}
+.sticky{position:sticky;top:96px}
+@media(max-width:900px){.cols{grid-template-columns:1fr}.sticky{position:static}}
+@media(max-width:640px){.grid2{grid-template-columns:1fr}}
 
-/* marcas sobre el texto */
-mark.f{
-  background:transparent;color:inherit;cursor:pointer;
-  border-bottom:2px solid var(--baja);padding-bottom:1px;
+label,.lab{display:block;font-size:13.5px;font-weight:600;margin:0 0 6px;color:var(--acero)}
+label small,.lab small{font-weight:500;color:var(--acero-claro)}
+input[type=text],input[type=password],input[type=number],textarea,select{width:100%;padding:11px 13px;border:1.5px solid var(--linea);border-radius:10px;font-family:var(--texto);font-size:15px;color:var(--tinta);background:#fff;transition:border-color .15s,box-shadow .15s}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--acero-claro);box-shadow:0 0 0 4px rgba(124,147,172,.18)}
+input.bad{border-color:var(--brasa);box-shadow:0 0 0 4px rgba(228,87,46,.15)}
+textarea{resize:vertical;min-height:96px;line-height:1.5}
+input::placeholder,textarea::placeholder{color:#9DB0C2}
+.field{margin-bottom:16px}
+.help{font-size:12.8px;color:var(--gris);margin:6px 0 0}
+.help b{color:var(--acero)}
+
+button{font-family:var(--texto);cursor:pointer}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:11px;font-weight:600;font-size:15px;border:1.5px solid transparent;padding:11px 18px;transition:transform .08s,background .15s,border-color .15s;text-decoration:none;line-height:1.2}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--brasa);color:#fff;box-shadow:0 8px 18px -10px var(--brasa)}
+.btn-primary:hover{background:var(--brasa-osc)}
+.btn-big{font-size:17px;padding:14px 24px;border-radius:13px}
+.btn-dark{background:var(--tinta);color:#fff}
+.btn-dark:hover{background:#1c3656}
+.btn-ghost{background:#fff;border-color:var(--linea);color:var(--acero)}
+.btn-ghost:hover{border-color:var(--acero-claro);background:#F7FAFC}
+.btn-ok{background:var(--forjado);color:#fff}
+.btn-ok:hover{background:#0b6457}
+.btn-word{background:#2B579A;color:#fff}
+.btn-word:hover{background:#1e3f7a}
+.btn-sm{padding:7px 12px;font-size:13.5px;border-radius:9px}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:#fff;border:1.5px solid var(--linea);border-radius:999px;padding:7px 13px;font-size:13.5px;color:var(--acero);cursor:pointer;display:inline-flex;align-items:center;gap:6px;line-height:1.25;text-align:left}
+.chip:hover{border-color:var(--brasa);color:var(--brasa)}
+.chip[aria-pressed="true"]{background:var(--tinta);border-color:var(--tinta);color:#fff}
+.chip.mini-ex{font-size:12.5px;padding:4px 10px;border-style:dashed}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:1.5px solid var(--linea);background:#fff;border-radius:9px;padding:7px 11px;font-size:13.5px;font-weight:600;color:var(--acero)}
+.seg button:hover{border-color:var(--acero-claro)}
+.seg button[aria-pressed="true"]{background:var(--tinta);border-color:var(--tinta);color:#fff}
+
+.meto{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.meto button{text-align:left;background:#fff;border:1.5px solid var(--linea);border-radius:12px;padding:10px 12px;color:var(--tinta)}
+.meto button b{display:block;font-size:14px}
+.meto button span{display:block;font-size:12.3px;color:var(--gris);line-height:1.35;margin-top:2px}
+.meto button:hover{border-color:var(--acero-claro)}
+.meto button[aria-pressed="true"]{border-color:var(--tinta);box-shadow:0 0 0 2px var(--tinta);background:var(--papel)}
+
+.tip{display:flex;gap:12px;background:#FFF8E6;border:1px solid #F3DDA0;border-radius:12px;padding:13px 15px;font-size:14px;color:#6B4E00;margin-bottom:18px}
+.tip svg{width:22px;height:22px;color:#C98200;flex:none;margin-top:1px}
+.tip strong{color:#523B00}
+.aviso{background:var(--brasa-suave);border:1px solid #F3C7B5;border-radius:12px;padding:13px 15px;font-size:14px;color:var(--aviso);margin-bottom:16px}
+.okbox{background:var(--forjado-suave);border:1px solid #A9DCCF;border-radius:12px;padding:13px 15px;font-size:14px;color:#0B5A4E;margin-bottom:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+
+/* Inicio */
+.hero{background:var(--tinta);color:#EAF1F7;border-radius:22px;padding:40px 36px;position:relative;overflow:hidden;margin-bottom:26px;box-shadow:var(--sombra-alta)}
+.hero::before{content:"";position:absolute;right:-80px;top:-80px;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(228,87,46,.55),transparent 65%)}
+.hero::after{content:"";position:absolute;left:30%;bottom:-140px;width:420px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(14,140,122,.35),transparent 65%)}
+.hero>*{position:relative;z-index:1}
+@media(max-width:600px){.hero{padding:28px 20px;border-radius:18px}}
+.eyebrow{font:600 11.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:#8FA7BE;margin:0 0 14px}
+.hero h1{font-family:var(--display);font-weight:800;font-size:clamp(34px,5.4vw,58px);line-height:.98;letter-spacing:-.035em;margin:0 0 16px;max-width:17ch}
+.hero h1 em{font-style:normal;color:var(--brasa)}
+.hero p.lede{max-width:62ch;font-size:18px;color:#C3D3E2;margin:0 0 24px}
+.hero .actions .btn-ghost{background:transparent;color:#fff;border-color:#4A6787}
+.hero .actions .btn-ghost:hover{border-color:#fff}
+.draft{margin-top:18px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:14.5px}
+.sec-title{font-family:var(--display);font-weight:800;font-size:24px;letter-spacing:-.02em;margin:34px 0 6px}
+.sec-sub{color:var(--gris);margin:0 0 16px}
+.journey{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.jstop{background:#fff;border:1px solid var(--linea);border-radius:14px;padding:16px;position:relative}
+.jstop .ji{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:#fff;background:var(--c);margin-bottom:10px}
+.jstop .ji svg{width:20px;height:20px}
+.jstop b{display:block;font-size:15px;margin-bottom:2px}
+.jstop span{display:block;font-size:13px;color:var(--gris);line-height:1.45}
+.jstop .jn{position:absolute;top:12px;right:14px;font:700 12px var(--mono);color:var(--acero-claro)}
+@media(max-width:900px){.journey{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.journey{grid-template-columns:1fr}}
+
+.parts{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.part{display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid var(--linea);border-radius:12px;padding:12px 14px}
+.part .pi{width:34px;height:34px;border-radius:10px;background:color-mix(in srgb,var(--c) 14%,#fff);color:var(--c);display:grid;place-items:center;flex:none}
+.part b{display:block;font-size:14.5px}
+.part span{display:block;font-size:12.8px;color:var(--gris);line-height:1.4}
+
+.examples{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.excard{background:#fff;border:1px solid var(--linea);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:8px;box-shadow:var(--sombra);position:relative;overflow:hidden;text-align:left;font:inherit;color:inherit;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.excard:hover{transform:translateY(-3px);box-shadow:var(--sombra-alta)}
+.excard::before{content:"";position:absolute;left:0;top:0;right:0;height:5px;background:var(--c)}
+.excard .emo{font-size:32px;line-height:1}
+.excard .area{font:700 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--acero-claro)}
+.excard b{font-family:var(--display);font-size:18px;letter-spacing:-.01em;line-height:1.15}
+.excard p{margin:0;font-size:13.5px;color:var(--gris);flex:1}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--c);background:color-mix(in srgb,var(--c) 12%,#fff);border-radius:999px;padding:3px 9px;align-self:flex-start}
+
+/* Clave */
+.keyrow{display:flex;gap:8px}
+.keyrow input{flex:1;font-family:var(--mono);font-size:14px}
+.eye{width:46px;flex:none;border:1.5px solid var(--linea);background:#fff;border-radius:10px;color:var(--acero);display:grid;place-items:center}
+.light{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--papel);margin-top:14px;font-size:14.5px;font-weight:600}
+.light .bulbo{width:14px;height:14px;border-radius:50%;background:#B8C5D3;box-shadow:0 0 0 4px rgba(184,197,211,.3);flex:none}
+.light[data-s="ok"] .bulbo{background:#16A34A;box-shadow:0 0 0 4px rgba(22,163,74,.22)}
+.light[data-s="err"] .bulbo{background:var(--brasa);box-shadow:0 0 0 4px rgba(228,87,46,.22)}
+.light[data-s="wait"] .bulbo{background:#F59E0B;box-shadow:0 0 0 4px rgba(245,158,11,.25)}
+.olsteps{list-style:none;padding:0;margin:0;counter-reset:o;display:flex;flex-direction:column;gap:12px}
+.olsteps li{counter-increment:o;display:flex;gap:12px;font-size:14.5px;align-items:flex-start}
+.olsteps li::before{content:counter(o);width:28px;height:28px;border-radius:50%;background:var(--brasa-suave);color:var(--brasa);font:700 13px var(--mono);display:grid;place-items:center;flex:none}
+
+/* Acordeones */
+.acc{background:#fff;border:1px solid var(--linea);border-radius:var(--r);margin-bottom:12px;box-shadow:var(--sombra);overflow:hidden}
+.acc>summary{list-style:none;cursor:pointer;padding:15px 18px;display:flex;align-items:center;gap:12px}
+.acc>summary::-webkit-details-marker{display:none}
+.acc>summary .ai{width:36px;height:36px;border-radius:10px;background:var(--papel);color:var(--acero);display:grid;place-items:center;flex:none}
+.acc[open]>summary .ai{background:var(--tinta);color:#fff}
+.acc>summary b{font-family:var(--display);font-size:17px;display:block}
+.acc>summary small{display:block;color:var(--gris);font-size:13px}
+.acc>summary .chev{margin-left:auto;transition:transform .2s;color:var(--acero-claro)}
+.acc[open]>summary .chev{transform:rotate(180deg)}
+.acc .inner{padding:4px 18px 18px;border-top:1px solid var(--linea-2)}
+.acc .inner>*:first-child{margin-top:14px}
+.prompt-ta{font-family:var(--mono);font-size:12.3px;min-height:130px;background:#FBFDFE}
+
+/* Resumen lateral */
+.sum h3{margin-bottom:10px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.stat{background:var(--papel);border-radius:12px;padding:10px 12px}
+.stat b{display:block;font:800 24px var(--display);letter-spacing:-.02em;line-height:1.1}
+.stat span{font-size:12.3px;color:var(--gris)}
+.checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.checks li{display:flex;gap:9px;align-items:center;color:var(--gris)}
+.checks li .ck{width:20px;height:20px;border-radius:50%;border:2px solid var(--linea);display:grid;place-items:center;flex:none}
+.checks li.on{color:var(--tinta)}
+.checks li.on .ck{background:var(--forjado);border-color:var(--forjado);color:#fff}
+.checks li .ck svg{width:12px;height:12px}
+.docname{margin-top:14px;padding:11px 13px;border-radius:11px;background:var(--tinta);color:#C3D3E2;font-size:13.5px}
+.docname b{color:#fff}
+
+/* Generación */
+.agents{display:flex;flex-direction:column;gap:10px}
+.agent{background:#fff;border:1px solid var(--linea);border-radius:var(--r);box-shadow:var(--sombra);overflow:hidden;transition:border-color .2s}
+.agent-h{display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer}
+.agent .ai{width:42px;height:42px;border-radius:12px;background:color-mix(in srgb,var(--c) 14%,#fff);color:var(--c);display:grid;place-items:center;flex:none;transition:all .2s}
+.agent .ai svg{width:20px;height:20px}
+.agent-t{flex:1;min-width:0}
+.agent-t b{display:block;font-family:var(--display);font-size:16.5px}
+.agent-t span{display:block;font-size:13px;color:var(--gris)}
+.pill{font-size:12.5px;font-weight:700;border-radius:999px;padding:4px 10px;background:var(--linea-2);color:var(--gris);white-space:nowrap}
+.agent[data-s="run"]{border-color:#F59E0B}
+.agent[data-s="run"] .ai{background:var(--c);color:#fff;animation:pulse 1s infinite alternate}
+.agent[data-s="run"] .pill{background:#FFF1D6;color:#8A5A00}
+.agent[data-s="ok"] .ai{background:var(--c);color:#fff}
+.agent[data-s="ok"] .pill{background:var(--forjado-suave);color:var(--forjado)}
+.agent[data-s="err"]{border-color:var(--brasa)}
+.agent[data-s="err"] .pill{background:var(--brasa-suave);color:var(--brasa)}
+.agent-b{display:none;padding:4px 18px 16px 72px;font-size:14px;border-top:1px solid var(--linea-2);background:#FBFDFE}
+.agent.open .agent-b{display:block}
+@media(max-width:600px){.agent-b{padding-left:18px}}
+@keyframes pulse{from{transform:scale(1);box-shadow:0 0 0 0 rgba(228,87,46,.5)}to{transform:scale(1.06);box-shadow:0 0 0 10px rgba(228,87,46,0)}}
+.forging{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:14px;background:var(--tinta);color:#fff;margin-bottom:16px}
+.forging .spark{width:44px;height:44px;border-radius:12px;background:var(--brasa);display:grid;place-items:center;flex:none;animation:pulse 1s infinite alternate}
+.forging.done .spark{background:var(--forjado);animation:none}
+.forging.err .spark{animation:none}
+.forging b{font-family:var(--display);font-size:18px;display:block}
+.forging span{font-size:14px;color:#C3D3E2}
+.mini-list{margin:10px 0 0;padding:0;list-style:none}
+.mini-list li{padding:5px 0;border-bottom:1px solid var(--linea-2)}
+.mini-list li:last-child{border-bottom:0}
+.code{display:inline-block;font:700 11px var(--mono);border-radius:5px;padding:1px 6px;margin-right:6px;background:var(--linea-2);color:var(--acero)}
+
+/* Guía */
+.res-head{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.res-head h2{font-family:var(--display);font-weight:800;font-size:clamp(24px,3vw,32px);letter-spacing:-.02em;margin:0;flex:1;min-width:240px;line-height:1.1}
+.doc{background:#fff;border:1px solid var(--linea);border-radius:18px;box-shadow:var(--sombra-alta);padding:40px 44px;max-width:900px;margin:0 auto}
+@media(max-width:700px){.doc{padding:22px 16px}}
+.doc-h{border-bottom:3px solid var(--tinta);padding-bottom:18px;margin-bottom:26px}
+.doc-kind{font:600 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--brasa);margin:0 0 6px}
+.doc-h h1{font-family:var(--display);font-weight:800;font-size:clamp(26px,3.4vw,36px);letter-spacing:-.025em;line-height:1.05;margin:0 0 12px}
+.meta{display:flex;flex-wrap:wrap;gap:6px}
+.meta span{font-size:12.8px;font-weight:600;background:var(--papel);color:var(--acero);border-radius:999px;padding:4px 11px}
+.dsec{margin-bottom:28px}
+.dsec h2{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.01em;margin:0 0 10px;display:flex;align-items:center;gap:10px}
+.dsec h2 .num{width:28px;height:28px;border-radius:8px;background:var(--tinta);color:#fff;font:700 13px var(--mono);display:grid;place-items:center;flex:none}
+.dsec p{margin:0 0 10px;max-width:75ch}
+.sublab{font-size:13px;font-weight:700;color:var(--acero-claro);margin:14px 0 6px}
+.row{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--linea-2);font-size:14.5px;align-items:flex-start}
+.row:last-child{border-bottom:0}
+.row .code{margin-top:2px;flex:none}
+.code.cg{background:#E6F0FA;color:var(--c-ctx)}
+.code.ce{background:#EEEAFB;color:var(--c-comp)}
+.code.bl{background:var(--forjado-suave);color:var(--forjado)}
+.code.tm{background:var(--tinta);color:#fff}
+.row .hrs{margin-left:auto;font-size:12.5px;color:var(--gris);white-space:nowrap}
+.blk{font-weight:700;margin:16px 0 4px;display:flex;gap:8px;align-items:baseline}
+.blk small{font-weight:500;color:var(--gris)}
+.tbl-wrap{overflow-x:auto}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th{background:var(--tinta);color:#fff;text-align:left;padding:9px 11px;font-size:12.5px;font-weight:700}
+table.t td{padding:9px 11px;border-bottom:1px solid var(--linea-2);vertical-align:top}
+table.t tr:nth-child(even) td{background:#FAFCFE}
+.peso{font-weight:800;color:var(--brasa);white-space:nowrap}
+.note{margin-top:12px;padding:11px 14px;background:var(--papel);border-left:4px solid var(--forjado);border-radius:8px;font-size:14px}
+.demo-flag{background:#FFF8E6;border:1px solid #F3DDA0;color:#6B4E00;border-radius:12px;padding:11px 15px;font-size:14px;margin:0 auto 16px;max-width:900px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.demo-flag svg{color:#C98200}
+
+/* Navegación inferior */
+.bottomnav{position:fixed;left:0;right:0;bottom:0;z-index:35;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--linea)}
+.bn-in{max-width:1180px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px}
+.bn-hint{flex:1;text-align:center;font-size:14px;color:var(--gris)}
+.bn-hint b{color:var(--tinta)}
+@media(max-width:600px){.bn-hint{display:none}.bn-in{justify-content:space-between}}
+
+/* Modal */
+.modal{position:fixed;inset:0;z-index:60;background:rgba(15,34,55,.55);display:none;align-items:flex-start;justify-content:center;padding:6vh 16px;overflow:auto}
+.modal.on{display:flex}
+.modal-box{background:#fff;border-radius:18px;max-width:760px;width:100%;box-shadow:var(--sombra-alta);overflow:hidden}
+.modal-head{display:flex;align-items:center;gap:12px;padding:16px 20px;background:var(--tinta);color:#fff}
+.modal-head h2{font-family:var(--display);font-size:22px;margin:0;flex:1}
+.modal-head button{background:transparent;border:1px solid #4A6787;color:#fff;border-radius:9px;padding:6px 10px}
+.modal-body{padding:18px 20px 22px}
+.glos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:600px){.glos{grid-template-columns:1fr}}
+.glos div{background:var(--papel);border-radius:12px;padding:12px 14px}
+.glos b{display:block;font-family:var(--display);font-size:16px;margin-bottom:2px}
+.glos span{font-size:13.8px;color:var(--acero)}
+.hist{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--linea);border-radius:12px;margin-bottom:8px}
+.hist-t{flex:1;min-width:0;cursor:pointer}
+.hist-t b{display:block;font-size:15px}
+.hist-t span{font-size:12.8px;color:var(--gris)}
+.hist:hover{border-color:var(--acero-claro)}
+.iconbtn{width:34px;height:34px;border-radius:9px;border:1.5px solid var(--linea);background:#fff;color:var(--acero);display:grid;place-items:center;padding:0}
+.iconbtn:hover{border-color:var(--brasa);color:var(--brasa)}
+.empty{text-align:center;color:var(--gris);padding:30px 10px}
+
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--tinta);color:#fff;padding:11px 18px;border-radius:12px;font-size:14.5px;font-weight:600;opacity:0;pointer-events:none;transition:all .25s;z-index:70;max-width:90vw;text-align:center;box-shadow:var(--sombra-alta)}
+.toast.on{opacity:1;transform:translateX(-50%)}
+footer{max-width:1180px;margin:0 auto;padding:0 16px 30px;font-size:13px;color:#6E8299}
+footer hr{border:0;border-top:1px solid var(--linea);margin:0 0 14px}
+
+@media print{
+  body{background:#fff;padding:0}
+  .topbar,.bottomnav,.res-head,.demo-flag,.okbox,footer,.toast,.modal{display:none!important}
+  main{padding:0;max-width:none}
+  .screen{display:none!important}
+  .screen.on{display:block!important}
+  .doc{box-shadow:none;border:0;padding:0;max-width:none}
+  .dsec{break-inside:avoid-page}
+  table.t th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+/* ══ v2 ══ */
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:640px){.grid3{grid-template-columns:1fr}}
+.feats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:960px){.feats{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.feats{grid-template-columns:1fr}}
+.feat{background:#fff;border:1px solid var(--linea);border-radius:14px;padding:16px;border-top:4px solid var(--c)}
+.feat .pi{width:38px;height:38px;border-radius:11px;background:color-mix(in srgb,var(--c) 14%,#fff);color:var(--c);display:grid;place-items:center;margin-bottom:10px}
+.feat b{display:block;font-family:var(--display);font-size:17px;margin-bottom:3px}
+.feat span{display:block;font-size:13.5px;color:var(--gris);line-height:1.45}
+.importbar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:var(--tinta);color:#EAF1F7;border-radius:var(--r);padding:14px 16px;margin-bottom:18px}
+.importbar .pi{width:40px;height:40px;border-radius:11px;background:var(--brasa);display:grid;place-items:center;flex:none}
+.importbar b{display:block;font-size:15px}
+.importbar span{display:block;font-size:13.3px;color:#A9C0D4}
+.importbar .btn-dark{background:#fff;color:var(--tinta)}
+.importbar .btn-dark:hover{background:#EAF1F7}
+.inacc{border-top:1px solid var(--linea-2);margin-top:4px;padding-top:12px}
+.inacc>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--acero)}
+.inacc>summary::-webkit-details-marker{display:none}
+.inacc>summary .chev{margin-left:auto;transition:transform .2s;color:var(--acero-claro)}
+.inacc[open]>summary .chev{transform:rotate(180deg)}
+.rec{display:inline-block;font:700 11px var(--texto);background:var(--forjado-suave);color:var(--forjado);border-radius:999px;padding:2px 8px;vertical-align:2px;margin-left:4px}
+.checkgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:560px){.checkgrid{grid-template-columns:1fr}}
+.checkgrid label{display:flex;gap:9px;align-items:center;margin:0;padding:9px 11px;border-radius:10px;background:var(--papel);font-weight:500;color:var(--tinta);cursor:pointer;font-size:14px}
+.checkgrid input{width:18px;height:18px;accent-color:var(--forjado);margin:0}
+.checkgrid label:has(input:checked){background:var(--forjado-suave)}
+.drop{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;border:2px dashed var(--linea);border-radius:14px;padding:24px;cursor:pointer;color:var(--acero);margin:0;font-weight:500}
+.drop svg{width:30px;height:30px;color:var(--brasa)}
+.drop b{font-size:15px;color:var(--tinta)}
+.drop span{font-size:13px;color:var(--gris)}
+.drop.over,.drop:hover{border-color:var(--brasa);background:var(--brasa-suave)}
+
+.qa{background:#fff;border:1px solid var(--linea);border-radius:18px;box-shadow:var(--sombra);overflow:hidden}
+.qa-top{display:flex;gap:14px;align-items:center;padding:16px;background:var(--tinta);color:#fff}
+.ring{--p:0;--rc:var(--forjado);width:64px;height:64px;border-radius:50%;background:conic-gradient(var(--rc) calc(var(--p)*1%),#2F4A68 0);display:grid;place-items:center;flex:none}
+.ring b{width:50px;height:50px;border-radius:50%;background:var(--tinta);display:grid;place-items:center;font:800 19px var(--display)}
+.qa-top h3{font-family:var(--display);font-size:17px;margin:0}
+.qa-top span{font-size:13px;color:#A9C0D4}
+.qa-list{list-style:none;margin:0;padding:8px}
+.qa-list li{display:flex;gap:10px;padding:10px 8px;border-bottom:1px solid var(--linea-2);font-size:13.5px;align-items:flex-start}
+.qa-list li:last-child{border-bottom:0}
+.qa-list .dot{width:10px;height:10px;border-radius:50%;flex:none;margin-top:5px;background:var(--forjado)}
+.qa-list li[data-l="warn"] .dot{background:#F59E0B}
+.qa-list li[data-l="err"] .dot{background:var(--brasa)}
+.qa-list li[data-l="info"] .dot{background:var(--acero-claro)}
+.qa-list .qt{flex:1}
+.qa-list .qt b{display:block;font-size:12px;color:var(--acero-claro);font-weight:700}
+.qa-list .fix{flex:none;font-size:12.5px;padding:4px 9px;border-radius:8px;border:1.5px solid var(--linea);background:#fff;color:var(--acero);font-weight:600}
+.qa-list .fix:hover{border-color:var(--brasa);color:var(--brasa)}
+.qa-foot{padding:12px 14px;border-top:1px solid var(--linea-2);background:var(--papel);font-size:12.8px;color:var(--gris);display:flex;gap:8px;flex-direction:column}
+
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:0 0 16px}
+.metric{background:#fff;border:1px solid var(--linea);border-radius:14px;padding:14px 16px;box-shadow:var(--sombra)}
+.metric-v{font:800 34px var(--display);letter-spacing:-.03em;line-height:1.05;color:var(--tinta)}
+.metric-v.good{color:var(--forjado)} .metric-v.warn{color:var(--brasa)} .metric-v.mid{color:#B7791F}
+.metric-l{font-weight:700;font-size:14px;margin-top:4px}
+.metric-n{font-size:12.8px;color:var(--gris);margin-top:4px;line-height:1.45}
+.substeps{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+.substeps span{font-size:12.5px;font-weight:600;border-radius:999px;padding:5px 11px;background:var(--linea-2);color:var(--gris)}
+.substeps span.on{background:#FFF1D6;color:#8A5A00}
+.substeps span.done{background:var(--forjado-suave);color:var(--forjado)}
+.substeps span.fail{background:var(--brasa-suave);color:var(--brasa)}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.heat{border-collapse:separate;border-spacing:3px;font-size:13px;width:100%}
+.heat th{font-size:11.5px;color:var(--gris);font-weight:700;text-align:center;padding:4px;white-space:nowrap}
+.heat th.l,.heat td.l{text-align:left}
+.heat td{text-align:center;border-radius:6px;padding:7px 4px;min-width:34px}
+.heat td.l{padding:6px 8px 6px 0;min-width:170px;font-weight:600}
+.heat td.c0{background:#F3F6FA;color:#B8C5D3}
+.heat td.p{font-weight:800}
+.aband{display:flex;flex-direction:column;gap:6px}
+.aband-row{display:grid;grid-template-columns:minmax(140px,1.2fr) 2fr minmax(150px,1fr);gap:10px;align-items:center;font-size:13.5px}
+.aband-bar{height:10px;background:var(--linea-2);border-radius:6px;overflow:hidden}
+.aband-fill{height:100%;background:var(--brasa);border-radius:6px}
+.aband-n{color:var(--gris);font-size:12.5px}
+@media(max-width:600px){.aband-row{grid-template-columns:1fr}}
+.tagx{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;background:var(--linea-2);color:var(--acero);margin:1px 2px}
+.tagx.t{background:var(--forjado-suave);color:var(--forjado)}
+.tagx.a{background:var(--brasa-suave);color:var(--brasa)}
+.tb-tools{flex:none}.stepper{overflow:hidden;min-width:0}
+.sdot .lbl{display:none}.sdot[data-state="now"] .lbl{display:inline}
+@media(max-width:720px){.sdot[data-state="now"] .lbl{display:none}.sline{flex:1 1 4px;min-width:2px}.sdot{padding:4px 2px}.sdot .n{width:26px;height:26px}}
+
+/* ══ CuadernIA ══ */
+.res-grid{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:20px;align-items:start}
+.res-grid .nb{max-width:none;margin:0}
+@media(max-width:1060px){.res-grid{grid-template-columns:minmax(0,1fr)}.res-grid .qa{order:-1;position:static}}
+:root{--py:#3776AB;--py2:#FFD43B;--cod:#0B1C2E}
+.pystat{display:inline-flex;align-items:center;gap:7px;font:600 12.5px var(--texto);color:#C9D8E6;border:1px solid #3E5C7D;border-radius:9px;padding:6px 10px;background:transparent}
+.pystat i{width:9px;height:9px;border-radius:50%;background:#7C93AC;display:inline-block}
+.pystat[data-s="cargando"] i{background:#F59E0B;animation:pulse 1s infinite alternate}
+.pystat[data-s="listo"] i{background:#22C55E}
+.pystat[data-s="error"] i{background:var(--brasa)}
+.pystat[data-s="off"]{opacity:.6}
+@media(max-width:720px){.pystat span{display:none}}
+.agentes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:900px){.agentes{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.agentes{grid-template-columns:1fr}}
+.ag{background:#fff;border:1px solid var(--linea);border-radius:14px;padding:16px;position:relative}
+.ag .pi{width:40px;height:40px;border-radius:12px;background:var(--c);color:#fff;display:grid;place-items:center;margin-bottom:10px}
+.ag b{display:block;font-family:var(--display);font-size:17px}
+.ag span{display:block;font-size:13.5px;color:var(--gris);line-height:1.45;margin-top:3px}
+.ag .kind{position:absolute;top:14px;right:14px;font:700 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--acero-claro)}
+.ag.det{background:var(--papel);border-style:dashed}
+.flowline{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:14px 0 0;font-size:13px;color:var(--gris)}
+.flowline span{background:#fff;border:1px solid var(--linea);border-radius:999px;padding:4px 10px;font-weight:600;color:var(--acero)}
+.cifras{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+@media(max-width:640px){.cifras{grid-template-columns:repeat(3,1fr)}}
+.cifra{background:var(--papel);border-radius:12px;padding:10px 12px}
+.cifra b{display:block;font:800 22px var(--display)}
+.cifra span{font-size:12px;color:var(--gris)}
+.tipo-sel{padding:5px 8px!important;font-size:12.5px!important;border-radius:8px!important;width:auto!important}
+.t td.na-alta{color:var(--brasa);font-weight:700}
+.rolechips{display:flex;flex-wrap:wrap;gap:6px}
+.rolechips .chip{font-size:13px;padding:5px 11px}
+.rolechips .chip[data-rol="resp"]{background:#1F6FB2;border-color:#1F6FB2;color:#fff}
+.rolechips .chip[data-rol="pred"]{background:#0E8C7A;border-color:#0E8C7A;color:#fff}
+.rolechips .chip[data-rol="grupo"]{background:#6B4FD8;border-color:#6B4FD8;color:#fff}
+.rolechips .chip small{opacity:.75;font-weight:500}
+.roletabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.roletabs button{border:1.5px solid var(--linea);background:#fff;border-radius:9px;padding:7px 12px;font-weight:600;font-size:13.5px;color:var(--acero);display:flex;gap:7px;align-items:center}
+.roletabs button i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.roletabs button[aria-pressed="true"]{border-color:var(--tinta);box-shadow:0 0 0 2px var(--tinta)}
+.secplan{background:#fff;border:1px solid var(--linea);border-radius:14px;padding:14px 16px;margin-bottom:10px;box-shadow:var(--sombra)}
+.secplan header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.secplan .n{width:28px;height:28px;border-radius:8px;background:var(--tinta);color:#fff;font:700 13px var(--mono);display:grid;place-items:center;flex:none}
+.secplan .bloque{font:700 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--acero-claro)}
+.secplan .mandos{margin-left:auto;display:flex;gap:4px}
+.cambios{list-style:none;margin:0;padding:0}
+.cambios li{padding:8px 0;border-bottom:1px solid var(--linea-2);font-size:14px}
+.cambios li:last-child{border-bottom:0}
+.cambios b{color:var(--acero)}
+.gen{background:#fff;border:1px solid var(--linea);border-radius:var(--r);box-shadow:var(--sombra);margin-bottom:10px;overflow:hidden}
+.gen[data-s="run"]{border-color:#F59E0B}
+.gen[data-s="ok"]{border-left:5px solid var(--forjado)}
+.gen[data-s="warn"]{border-left:5px solid #F59E0B}
+.gen[data-s="err"]{border-left:5px solid var(--brasa)}
+.gen-h{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;flex-wrap:wrap}
+.gen-h .n{width:30px;height:30px;border-radius:9px;background:var(--papel);font:700 13px var(--mono);display:grid;place-items:center;flex:none}
+.gen[data-s="run"] .gen-h .n{background:#F59E0B;color:#fff}
+.gen[data-s="ok"] .gen-h .n{background:var(--forjado);color:#fff}
+.gen[data-s="warn"] .gen-h .n{background:#F59E0B;color:#fff}
+.gen[data-s="err"] .gen-h .n{background:var(--brasa);color:#fff}
+.gen-t{flex:1;min-width:180px}
+.gen-t b{display:block;font-size:15px}
+.gen-t small{color:var(--gris);font-size:12.5px}
+.fases{display:flex;gap:4px;flex-wrap:wrap}
+.fase{font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 9px;background:var(--linea-2);color:var(--acero-claro)}
+.fase.on{background:#FFF1D6;color:#8A5A00}
+.fase.done{background:var(--forjado-suave);color:var(--forjado)}
+.fase.fix{background:#FDEBE4;color:var(--brasa)}
+.fase.skip{opacity:.45}
+.gen-b{display:none;padding:4px 16px 16px;border-top:1px solid var(--linea-2)}
+.gen.open .gen-b{display:block}
+.gen-b h4{font-size:12.5px;color:var(--acero-claro);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 6px}
+.intentos-l{list-style:none;margin:0;padding:0;font-size:13.5px}
+.intentos-l li{display:flex;gap:8px;padding:6px 0;border-bottom:1px dashed var(--linea)}
+.intentos-l li:last-child{border-bottom:0}
+.intentos-l .k{font:700 11.5px var(--mono);color:var(--gris);flex:none;min-width:74px}
+.probs{list-style:none;margin:0;padding:0}
+.probs li{padding:8px 10px;border-radius:10px;margin-bottom:6px;font-size:13.5px;background:var(--papel)}
+.probs li[data-g="alta"]{background:var(--brasa-suave);color:var(--aviso)}
+.probs li[data-g="media"]{background:#FFF8E6;color:#6B4E00}
+.probs li b{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+pre.src,pre.out{margin:0;border-radius:10px;padding:12px 14px;font:12.5px/1.5 var(--mono);overflow:auto;max-height:340px;white-space:pre}
+pre.src{background:var(--cod);color:#D6E4F0}
+pre.out{background:#F6F8FA;color:#1A2733;border:1px solid var(--linea-2)}
+pre.out.err{background:#FFF3F0;color:#8A2A12;border-color:#F3C7B5}
+.figs{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.figs img{max-width:100%;border:1px solid var(--linea);border-radius:8px;background:#fff}
+.gen-b .figs img{max-height:220px}
+/* vista del cuaderno */
+.nb{background:#fff;border:1px solid var(--linea);border-radius:18px;box-shadow:var(--sombra-alta);padding:26px 26px 30px;max-width:980px;margin:0 auto}
+@media(max-width:700px){.nb{padding:14px 10px}}
+.nbc{display:grid;grid-template-columns:62px minmax(0,1fr);gap:10px;margin-bottom:12px}
+.nbc .pr{font:600 12px var(--mono);color:var(--py);text-align:right;padding-top:10px}
+.nbc .pr.out{color:var(--brasa)}
+.nbmd{font-size:15px;line-height:1.6}
+.nbmd h1{font-family:var(--display);font-size:28px;letter-spacing:-.02em;margin:0 0 10px}
+.nbmd h2{font-family:var(--display);font-size:21px;margin:14px 0 6px}
+.nbmd h3{font-size:16px;margin:10px 0 4px}
+.nbmd p{margin:0 0 8px}
+.nbmd blockquote{margin:6px 0;border-left:4px solid var(--linea);padding:4px 12px;color:var(--gris)}
+.nbmd code{font-size:.88em}
+.nbmd table{border-collapse:collapse;font-size:13.5px;margin:8px 0}
+.nbmd td,.nbmd th{border:1px solid var(--linea);padding:4px 8px;text-align:left}
+.nbmd th{background:var(--papel)}
+.nbmd li{margin-left:18px}
+@media(max-width:600px){.nbc{grid-template-columns:1fr}.nbc .pr{text-align:left;padding:0}}
+.badge-ok,.badge-warn,.badge-err,.badge-off{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 9px}
+.badge-ok{background:var(--forjado-suave);color:var(--forjado)}
+.badge-warn{background:#FFF1D6;color:#8A5A00}
+.badge-err{background:var(--brasa-suave);color:var(--brasa)}
+.badge-off{background:var(--linea-2);color:var(--gris)}
+.chk{list-style:none;margin:0;padding:0}
+.chk li{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--linea-2);font-size:14px;align-items:flex-start}
+.chk li:last-child{border-bottom:0}
+.chk .m{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;flex:none;font-weight:800;font-size:12px}
+.chk .m.si{background:var(--forjado);color:#fff}.chk .m.parcial{background:#F59E0B;color:#fff}.chk .m.no{background:var(--brasa);color:#fff}
+.chk small{display:block;color:var(--gris)}
+.dlrow{display:flex;gap:10px;flex-wrap:wrap}
+
+/* ══ RefinIA ══ */
+.rc .meta span{background:transparent;padding:0;border-radius:0;font-size:11.5px;font-weight:600;color:var(--gris)}
+.rc .meta .sev{padding:1px 8px;border-radius:999px;font-weight:800}
+.rc .meta .sev.alta{background:var(--alta-bg);color:var(--alta)}.rc .meta .sev.media{background:var(--media-bg);color:#8A5A00}.rc .meta .sev.baja{background:var(--baja-bg);color:var(--baja)}
+.rc .meta .cat{color:var(--acero);font-weight:700}
+.rc .exacto{font-size:11.5px!important}
+dialog .row{display:flex;flex-direction:column;gap:8px}
+dialog .drop{padding:18px}
+:root{--alta:#C0392B;--alta-bg:rgba(192,57,43,.12);--media:#C98200;--media-bg:rgba(201,130,0,.13);--baja:#5D7691;--baja-bg:rgba(93,118,145,.10);--ok:#0E7C6B;--serif:Georgia,"Times New Roman",serif}
+body.ws{padding-bottom:0}
+body.ws .bottomnav,body.ws footer{display:none}
+body.ws main{max-width:none;padding:0}
+.lenses{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:640px){.lenses{grid-template-columns:1fr}}
+.lens{display:flex;gap:10px;align-items:flex-start;background:var(--papel);border-radius:12px;padding:11px 12px;cursor:pointer;margin:0;font-weight:500;color:var(--tinta)}
+.lens input{width:18px;height:18px;margin-top:2px;accent-color:var(--forjado);flex:none}
+.lens b{display:block;font-size:14.5px}
+.lens small{display:block;font-size:12.8px;color:var(--gris);line-height:1.4;font-weight:400}
+.lens:has(input:checked){background:var(--forjado-suave)}
+.lens.ex:has(input:checked){background:#EEEAFB}
+.estimate{font-size:13.5px;color:var(--gris);margin:10px 0 0}
+.wsbar{position:sticky;top:64px;z-index:30;background:#fff;border-bottom:1px solid var(--linea);padding:8px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.wsbar .dn{font-weight:700;font-size:14.5px;flex:1;min-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wsprog{display:none;align-items:center;gap:10px;padding:8px 16px;background:#FFF8E6;border-bottom:1px solid #F3DDA0;font-size:13.5px}
+.wsprog.on{display:flex}
+.wsprog .bar{flex:1;height:6px;background:#F3DDA0;border-radius:4px;overflow:hidden;min-width:120px}
+.wsprog .bar span{display:block;height:100%;width:0;background:var(--brasa);transition:width .3s}
+.ws-grid{display:grid;grid-template-columns:minmax(0,1fr) 18px 420px;height:calc(100vh - 120px)}
+#docpane{overflow:auto;padding:26px 20px 60px;background:var(--papel)}
+#side{overflow:auto;background:#fff;border-left:1px solid var(--linea);display:flex;flex-direction:column}
+.spine{position:relative;background:var(--papel);border-left:1px solid var(--linea-2)}
+.spine .tick{position:absolute;left:3px;width:12px;height:3px;border-radius:1px;cursor:pointer;background:var(--baja)}
+.spine .tick.s-alta{background:var(--alta)}.spine .tick.s-media{background:var(--media)}.spine .tick.done{opacity:.28}
+.spine .view{position:absolute;left:0;width:18px;background:rgba(15,34,55,.08);border-radius:3px;pointer-events:none}
+.mobtabs{display:none;gap:6px;padding:8px 16px;background:#fff;border-bottom:1px solid var(--linea)}
+.mobtabs button{flex:1;border:1.5px solid var(--linea);background:#fff;border-radius:9px;padding:8px;font-weight:700;color:var(--acero)}
+.mobtabs button[aria-pressed="true"]{background:var(--tinta);color:#fff;border-color:var(--tinta)}
+@media(max-width:1000px){.ws-grid{grid-template-columns:minmax(0,1fr);height:auto}.spine{display:none}#side{display:none;border-left:0}body.view-side #side{display:flex}body.view-side #docpane{display:none}.mobtabs{display:flex}#docpane{padding:14px 8px 40px}}
+.sheet{max-width:780px;margin:0 auto;background:#fff;border:1px solid var(--linea);border-radius:12px;box-shadow:var(--sombra);padding:48px 56px 64px;font-family:var(--serif);font-size:16.5px;line-height:1.72;color:#15202B}
+@media(max-width:700px){.sheet{padding:22px 16px}}
+.sheet h1,.sheet h2,.sheet h3{font-family:var(--display);line-height:1.2;margin:1.6em 0 .5em;letter-spacing:-.01em}
+.sheet h1{font-size:26px;margin-top:0}.sheet h2{font-size:20px}.sheet h3{font-size:17px}
+.sheet p{margin:0 0 1em}
+.sheet .tabular{font-family:var(--mono);font-size:13px;line-height:1.5;white-space:pre-wrap;color:var(--acero)}
+mark.f{background:transparent;color:inherit;cursor:pointer;border-bottom:2px solid var(--baja);padding-bottom:1px;border-radius:2px}
 mark.f.s-alta{border-color:var(--alta);background:var(--alta-bg)}
 mark.f.s-media{border-color:var(--media);background:var(--media-bg)}
 mark.f.s-baja{border-color:var(--baja);background:var(--baja-bg)}
-mark.f.done{border-style:dotted;background:transparent;color:var(--ink-3)}
-mark.f.dropped{border:none;background:transparent;color:inherit;text-decoration:none}
-mark.f.active{box-shadow:0 0 0 3px var(--accent-soft);border-radius:2px}
-
-/* ---------- espina / minimapa ---------- */
-.spine{position:relative;background:var(--canvas);border-left:1px solid var(--rule-soft)}
-.spine .tick{
-  position:absolute;left:3px;width:12px;height:3px;border-radius:1px;cursor:pointer;
-  background:var(--baja);
-}
-.spine .tick.s-alta{background:var(--alta)}
-.spine .tick.s-media{background:var(--media)}
-.spine .tick.done{opacity:.28}
-.spine .view{position:absolute;left:0;width:18px;background:rgba(27,63,160,.10);pointer-events:none}
-
-/* ---------- panel de comentarios ---------- */
-.side{background:var(--paper);border-left:1px solid var(--rule);display:flex;flex-direction:column;min-width:0}
-.side header{padding:14px 16px 10px;border-bottom:1px solid var(--rule-soft)}
-.tally{display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
-.tally b{font-family:var(--serif);font-size:30px;font-weight:600;line-height:1}
-.tally span{font-size:13px;color:var(--ink-2)}
-.filters{display:flex;flex-wrap:wrap;gap:6px}
-.chip{
-  border:1px solid var(--rule);background:var(--paper);border-radius:999px;
-  padding:3px 10px;font-size:12.5px;color:var(--ink-2);
-}
-.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
-.list{flex:1;overflow:auto;padding:10px 12px 60px}
-.card{
-  border:1px solid var(--rule);border-left:3px solid var(--baja);border-radius:5px;
-  padding:11px 12px;margin-bottom:9px;background:var(--paper);
-}
-.card.s-alta{border-left-color:var(--alta)}
-.card.s-media{border-left-color:var(--media)}
-.card.active{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
-.card.st-hecho,.card.st-descartado{opacity:.5}
-.card .meta{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11.5px;color:var(--ink-3)}
-.card .meta .cat{color:var(--ink-2);font-weight:500}
-.card .meta .sev{padding:1px 6px;border-radius:3px;font-weight:500}
-.card .meta .sev.alta{background:var(--alta-bg);color:var(--alta)}
-.card .meta .sev.media{background:var(--media-bg);color:var(--media)}
-.card .meta .sev.baja{background:var(--baja-bg);color:var(--baja)}
-.card h4{margin:0 0 5px;font-size:14px;font-weight:600;line-height:1.35}
-.card blockquote{
-  margin:0 0 7px;padding-left:9px;border-left:2px solid var(--rule);
-  font-family:var(--serif);font-size:14px;color:var(--ink-2);font-style:italic;
-}
-.card p{margin:0 0 6px;font-size:13.5px;color:var(--ink-2);line-height:1.55}
-.card .fix{background:#F6F8FB;border-radius:4px;padding:7px 9px;font-size:13px;color:var(--ink-2)}
-.card .fix strong{color:var(--ink);font-weight:500}
-.card .acts{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
-.card .unanchored{font-size:11.5px;color:var(--ink-3)}
-
-.empty{padding:44px 22px;text-align:center;color:var(--ink-2)}
-.empty h3{font-family:var(--serif);font-size:19px;font-weight:600;margin:0 0 8px;color:var(--ink)}
-.empty p{font-size:13.5px;margin:0 0 14px;line-height:1.55}
-
-/* ---------- pantalla de inicio ---------- */
-.start{max-width:760px;margin:0 auto;padding:0 8px}
-.start .hero{
-  background:var(--paper);border:1px solid var(--rule);border-radius:2px;box-shadow:var(--shadow);
-  padding:52px 56px 44px;
-}
-.start .hero h1{font-family:var(--serif);font-size:34px;line-height:1.15;font-weight:600;margin:0 0 12px;max-width:20ch}
-.start .hero .lede{font-family:var(--serif);font-size:18px;line-height:1.6;color:var(--ink-2);max-width:60ch;margin:0 0 26px}
-.drop{
-  border:1px dashed var(--rule);border-radius:6px;padding:26px;text-align:center;color:var(--ink-2);
-  background:#FAFBFD;
-}
-.drop.over{border-color:var(--accent);background:var(--accent-soft)}
-.drop p{margin:0 0 12px;font-size:13.5px}
-.paste{width:100%;min-height:150px;border:1px solid var(--rule);border-radius:6px;padding:12px;
-  font-family:var(--serif);font-size:15px;line-height:1.6;resize:vertical;margin-top:14px}
-.lenses{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
-.lens{display:flex;gap:9px;align-items:flex-start;border:1px solid var(--rule);border-radius:6px;padding:9px 11px}
-.lens input{margin:3px 0 0}
-.lens b{display:block;font-size:13.5px;font-weight:500}
-.lens small{color:var(--ink-3);font-size:12px;line-height:1.4;display:block}
-.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}
-.field{display:flex;flex-direction:column;gap:4px}
-.field label{font-size:12px;color:var(--ink-3)}
-.field select,.field input{border:1px solid var(--rule);border-radius:6px;padding:7px 9px;background:var(--paper)}
-.estimate{font-size:12.5px;color:var(--ink-3);margin-top:12px;font-variant-numeric:tabular-nums}
-.recent{margin-top:22px}
-.recent h3{font-size:13px;font-weight:500;color:var(--ink-3);margin:0 0 8px}
-.recent a{display:flex;justify-content:space-between;gap:12px;padding:9px 12px;background:var(--paper);
-  border:1px solid var(--rule);border-radius:5px;margin-bottom:6px;text-decoration:none;color:var(--ink);font-size:13.5px}
-.recent a:hover{border-color:var(--accent)}
-.recent a span{color:var(--ink-3);font-size:12px;white-space:nowrap}
-
-/* ---------- modales ---------- */
-dialog{
-  border:1px solid var(--rule);border-radius:8px;padding:0;max-width:560px;width:calc(100% - 32px);
-  box-shadow:0 18px 50px rgba(18,22,28,.22);color:var(--ink);background:var(--paper);
-}
-dialog::backdrop{background:rgba(18,22,28,.42)}
-dialog .dh{padding:16px 20px 12px;border-bottom:1px solid var(--rule-soft);display:flex;justify-content:space-between;align-items:center}
-dialog .dh h2{margin:0;font-family:var(--serif);font-size:19px;font-weight:600}
-dialog .db{padding:18px 20px;max-height:66vh;overflow:auto}
-dialog .df{padding:12px 20px;border-top:1px solid var(--rule-soft);display:flex;justify-content:flex-end;gap:8px}
-dialog label.f{display:block;margin-bottom:14px}
-dialog label.f span{display:block;font-size:12.5px;color:var(--ink-2);margin-bottom:4px}
-dialog label.f input,dialog label.f select,dialog label.f textarea{
-  width:100%;border:1px solid var(--rule);border-radius:6px;padding:8px 10px;background:var(--paper)}
-dialog small.hint{display:block;color:var(--ink-3);font-size:12px;margin-top:4px;line-height:1.45}
-
-
-/* ---------- resolver comentario (evidencia + corrección) ---------- */
-#dlgFix{max-width:760px}
-.fixhead{border:1px solid var(--rule-soft);background:#F6F8FB;border-radius:6px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:var(--ink-2)}
-.fixhead b{display:block;color:var(--ink);font-size:14px;font-weight:600;margin-bottom:4px}
-.fixhead blockquote{margin:6px 0 0;padding-left:9px;border-left:2px solid var(--rule);font-family:var(--serif);font-style:italic}
-.fixdiff{font-family:var(--serif);font-size:14px;line-height:1.6;background:var(--paper);border:1px solid var(--rule);
-  border-radius:6px;padding:10px 12px;max-height:230px;overflow:auto;white-space:pre-wrap;margin-bottom:14px}
-.fixdiff ins{background:#E1F1E6;color:var(--ok);text-decoration:none}
-.fixdiff del{background:#FBE9E9;color:var(--alta)}
+mark.f.active{outline:2px solid var(--brasa);outline-offset:2px}
+mark.f.done,mark.f.dropped{background:transparent;border-bottom-style:dotted;opacity:.6}
+.sidetabs{display:flex;gap:6px;padding:12px 14px 0}
+.sidetabs button{flex:1;border:1.5px solid var(--linea);background:#fff;border-radius:9px;padding:8px;font-weight:700;font-size:13.5px;color:var(--acero)}
+.sidetabs button[aria-pressed="true"]{background:var(--tinta);color:#fff;border-color:var(--tinta)}
+.tally{padding:12px 14px 4px;display:flex;gap:10px;align-items:baseline}
+.tally b{font:800 30px var(--display)}
+.tally span{font-size:13.5px;color:var(--gris)}
+#filters{display:flex;flex-wrap:wrap;gap:6px;padding:6px 14px 10px;border-bottom:1px solid var(--linea-2)}
+#filters .chip{font-size:12.5px;padding:4px 10px}
+#list,#exactBox{padding:12px 14px 30px}
+.rc{border:1px solid var(--linea);border-left:4px solid var(--baja);border-radius:12px;padding:12px 13px;margin-bottom:10px;background:#fff;cursor:pointer;transition:box-shadow .15s}
+.rc:hover{box-shadow:var(--sombra)}
+.rc.s-alta{border-left-color:var(--alta)}.rc.s-media{border-left-color:var(--media)}
+.rc.active{border-color:var(--brasa);box-shadow:0 0 0 2px var(--brasa)}
+.rc.st-hecho,.rc.st-descartado{opacity:.6}
+.rc .meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:11.5px;color:var(--gris);margin-bottom:5px}
+.rc .sev{font-weight:800;border-radius:999px;padding:1px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.sev.alta{background:var(--alta-bg);color:var(--alta)}.sev.media{background:var(--media-bg);color:#8A5A00}.sev.baja{background:var(--baja-bg);color:var(--baja)}
+.rc .cat{font-weight:700;color:var(--acero)}
+.rc .exacto{background:#EEEAFB;color:#6B4FD8;border-radius:999px;padding:1px 8px;font-weight:700}
+.rc h4{margin:0 0 6px;font-size:15px;line-height:1.35}
+.rc blockquote{margin:0 0 8px;padding:6px 10px;border-left:3px solid var(--linea);background:var(--papel);font-family:var(--serif);font-size:13.5px;color:var(--acero);border-radius:0 6px 6px 0}
+.rc p{margin:0 0 8px;font-size:13.8px;line-height:1.5}
+.rc .fix{font-size:13px;background:var(--papel);border-radius:8px;padding:7px 10px;margin-bottom:8px}
+.rc .fix.done{background:var(--forjado-suave)}
+.rc .refs{margin:4px 0 0;padding-left:18px}
+.rc .acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.rc .acts .btn{padding:5px 9px;font-size:12.5px;border-radius:8px}
+.unanchored{font-size:11.5px;color:var(--acero-claro)}
+.empty{text-align:center;color:var(--gris);padding:30px 10px}
+.empty h3{font-family:var(--display);color:var(--tinta);margin:0 0 6px}
+.btn.sm{padding:6px 11px;font-size:13px;border-radius:9px}
+.btn.primary{background:var(--brasa);color:#fff}
+.btn.ghost,.btn:not(.btn-primary):not(.btn-dark):not(.btn-ok):not(.btn-word):not(.btn-ghost):not(.primary){background:#fff;border-color:var(--linea);color:var(--acero)}
+dialog{border:0;border-radius:18px;padding:0;max-width:640px;width:calc(100% - 32px);box-shadow:var(--sombra-alta);color:var(--tinta)}
+dialog.wide{max-width:860px}
+dialog::backdrop{background:rgba(15,34,55,.55)}
+dialog .dh{display:flex;align-items:center;gap:12px;padding:14px 18px;background:var(--tinta);color:#fff}
+dialog .dh h2{font-family:var(--display);font-size:20px;margin:0;flex:1}
+dialog .dh .btn{background:transparent!important;border:1px solid #4A6787!important;color:#fff!important}
+dialog .db{padding:16px 18px;max-height:70vh;overflow:auto}
+dialog .df{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--linea-2)}
+dialog label.f{display:block}
+dialog label.f span{display:block;font-size:13.5px;font-weight:600;color:var(--acero);margin-bottom:6px}
+.fixhead{background:var(--papel);border-radius:10px;padding:10px 12px;font-size:14px;margin-bottom:12px}
+.fixhead b{display:block;margin-bottom:4px}
+.fixhead blockquote{margin:8px 0 0;font-family:var(--serif);color:var(--acero)}
+.fixdiff{font-family:var(--serif);font-size:14.5px;line-height:1.6;white-space:pre-wrap;background:#fff;border:1px solid var(--linea);border-radius:10px;padding:10px 12px;margin-bottom:12px;max-height:220px;overflow:auto}
+.fixdiff:empty{display:none}
+ins{background:#E1F1E6;color:var(--ok);text-decoration:none}
+del{background:#FBE9E9;color:var(--alta)}
+.busy{font-size:13.5px;color:var(--gris)}
 .srcs{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
-.src{border:1px solid var(--rule);border-radius:6px;padding:8px 10px;font-size:12.5px;color:var(--ink-2);display:flex;gap:9px;align-items:flex-start}
-.src input{margin:3px 0 0}
-.src b{display:block;color:var(--ink);font-weight:500;font-size:13px;line-height:1.35}
-.src span.tag{display:inline-block;font-size:11px;color:var(--ink-3);margin-right:6px}
-.src a{color:var(--accent);word-break:break-all}
-.card .fix.done{background:#EDF6F0}
-.card .fix.done strong{color:var(--ok)}
-.card .refs{margin:5px 0 0;padding-left:16px;font-size:12px;color:var(--ink-3)}
-.card .refs li{margin-bottom:2px}
-.card.st-hecho.applied{opacity:.72}
-.busy{font-size:12.5px;color:var(--ink-3)}
-
-/* ---------- chat ---------- */
-.chatlog{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
-.msg{padding:9px 11px;border-radius:7px;font-size:13.5px;line-height:1.55;max-width:92%}
-.msg.u{align-self:flex-end;background:var(--accent-soft)}
-.msg.a{align-self:flex-start;background:#F4F6F9;white-space:pre-wrap}
-
-.log{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--ink-3);
-  background:#F6F8FA;border:1px solid var(--rule-soft);border-radius:5px;padding:9px;max-height:180px;overflow:auto;white-space:pre-wrap}
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;
-  padding:9px 15px;border-radius:6px;font-size:13.5px;z-index:90;box-shadow:var(--shadow)}
-
-.tabs{display:none;gap:6px;padding:8px 12px;background:var(--paper);border-bottom:1px solid var(--rule)}
-@media (max-width:1000px){
-  .wrap{grid-template-columns:1fr;grid-template-rows:1fr}
-  .spine{display:none}
-  .side{border-left:none;border-top:1px solid var(--rule);display:none}
-  body.view-side .side{display:flex}
-  body.view-side .docpane{display:none}
-  .tabs{display:flex}
-  .sheet{padding:32px 22px 44px}
-  .start .hero{padding:32px 22px}
-  .lenses{grid-template-columns:1fr}
-}
-@media print{
-  .top,.side,.spine,.tabs{display:none}
-  .wrap{display:block;height:auto}
-  .sheet{box-shadow:none;border:none}
-}
+.src{border:1px solid var(--linea);border-radius:10px;padding:8px 10px;font-size:12.8px;display:flex;gap:9px;align-items:flex-start;margin:0;font-weight:400}
+.src b{display:block;font-weight:600}
+.src .tag{display:block;color:var(--gris)}
+.src a{word-break:break-all}
+#chatlog{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;max-height:45vh;overflow:auto}
+.msg{padding:9px 12px;border-radius:12px;font-size:14px;line-height:1.55;max-width:92%}
+.msg.u{align-self:flex-end;background:var(--brasa-suave)}
+.msg.a{align-self:flex-start;background:var(--papel);white-space:pre-wrap}
+.explist{display:flex;flex-direction:column;gap:8px}
+.explist button{text-align:left;border:1.5px solid var(--linea);background:#fff;border-radius:12px;padding:10px 12px}
+.explist button:hover{border-color:var(--brasa)}
+.explist b{display:block;font-size:14.5px}.explist small{color:var(--gris);font-size:12.8px}
+.log{font:12px/1.5 var(--mono);background:var(--papel);border-radius:10px;padding:10px;white-space:pre-wrap;max-height:260px;overflow:auto;margin-top:12px}
+/* panel de exactitud */
+.ex-sum{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.ex-sum .stat b{font-size:22px}
+.ex-sec{margin:14px 0 6px;font:700 12px var(--texto);text-transform:uppercase;letter-spacing:.06em;color:var(--acero-claro);display:flex;gap:6px;align-items:center}
+.ex-row{display:flex;gap:9px;align-items:flex-start;padding:8px 6px;border-bottom:1px solid var(--linea-2);font-size:13.3px;border-radius:6px}
+.ex-row[data-f]{cursor:pointer}
+.ex-row[data-f]:hover{background:var(--papel)}
+.ex-row .d{width:9px;height:9px;border-radius:50%;flex:none;margin-top:5px;background:var(--ok)}
+.ex-row .d.alta{background:var(--alta)}.ex-row .d.media{background:var(--media)}.ex-row .d.baja{background:var(--baja)}.ex-row .d.gris{background:#B8C5D3}
+.ex-row code{font-size:11.5px;word-break:break-word}
+.ex-row small{display:block;color:var(--gris)}
+.ex-row a{font-size:12px}
 </style>
 </head>
 <body>
+<svg style="display:none" aria-hidden="true">
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4z"/></symbol>
+  <symbol id="i-rocket" viewBox="0 0 24 24"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></symbol>
+  <symbol id="i-quiz" viewBox="0 0 24 24"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8M13 12h8M13 18h8"/></symbol>
+  <symbol id="i-cards" viewBox="0 0 24 24"><rect x="8" y="8" width="14" height="14" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6M10 22h4"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
+  <symbol id="i-github" viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></symbol>
+  <symbol id="i-archive" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/></symbol>
+  <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
+  <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4M17 5h4M5 17v4M3 19h4"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></symbol>
+  <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></symbol>
+  <symbol id="i-form" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
+  <symbol id="i-tablet" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M12 18h.01"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 18h.01"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M6 14l1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7M9 11h5"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3v18M7 21h10M5 7h14M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0z"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></symbol>
+</svg>
 
-<header class="top">
-  <div class="mark"><b>RefinIA</b><span>verificación de manuscritos</span></div>
-  <div class="docname" id="docname"></div>
-  <div class="progress" id="progress">
-    <div class="bar"><i id="pbar"></i></div>
-    <small id="ptext"></small>
+<div class="topbar">
+  <div class="tb-in">
+    <button class="logo" id="goHome" type="button" aria-label="Ir al inicio"><span class="anv"><svg class="i"><use href="#i-shield"/></svg></span><span>Refin<em>IA</em></span></button>
+    <nav class="stepper" id="stepper" aria-label="Pasos"></nav>
+    <div class="tb-tools">
+      <button class="tb-btn" id="btnRecent" type="button"><svg class="i"><use href="#i-archive"/></svg><span class="lbl">Mis revisiones</span></button>
+      <button class="tb-btn" id="btnHelp" type="button"><svg class="i"><use href="#i-help"/></svg><span class="lbl">Ayuda</span></button>
+    </div>
   </div>
-  <button class="btn ghost" id="btnCancel" style="display:none">Detener</button>
-  <button class="btn ghost" id="btnRevision" style="display:none">Comparar revisión</button>
-  <button class="btn ghost" id="btnUndo" style="display:none">Deshacer cambio</button>
-  <button class="btn ghost" id="btnExport" style="display:none">Exportar</button>
-  <button class="btn ghost" id="btnSettings">Ajustes</button>
-  <button class="btn" id="btnNew">Nuevo documento</button>
-</header>
-
-<div class="tabs">
-  <button class="chip" id="tabDoc" aria-pressed="true">Documento</button>
-  <button class="chip" id="tabSide" aria-pressed="false">Comentarios</button>
+  <div class="progress"><span id="progBar"></span></div>
 </div>
 
-<div class="wrap">
-  <div class="docpane" id="docpane">
-    <div class="start" id="start">
-      <div class="hero">
-        <h1>Comprueba tu manuscrito antes de que lo haga un revisor</h1>
-        <p class="lede">RefinIA lee el documento pasaje a pasaje con varias lentes de revisión en paralelo, contrasta lo que dices en un sitio con lo que dices en otro, y devuelve sólo los comentarios que harían dudar a un evaluador.</p>
+<main id="app">
+<!-- ═════ 0 · INICIO ═════ -->
+<section class="screen" data-step="0">
+  <div class="hero">
+    <p class="eyebrow">Revisión de manuscritos para el profesorado iberoamericano · Universidad Miguel Hernández de Elche</p>
+    <h1>Comprueba tu manuscrito <em>antes que el revisor</em></h1>
+    <p class="lede">RefinIA lee tu artículo, tesis o TFM como lo haría un evaluador exigente. Recalcula los valores p, cuadra porcentajes e intervalos, verifica cada referencia en OpenAlex y comprueba si las fuentes citadas dicen lo que les atribuyes. Solo devuelve los comentarios que se pueden sostener.</p>
+    <div class="actions">
+      <button class="btn btn-primary btn-big" id="btnStart" type="button"><svg class="i"><use href="#i-upload"/></svg>Revisar mi manuscrito</button>
+      <button class="btn btn-ghost btn-big" id="btnEj" type="button"><svg class="i"><use href="#i-sparkles"/></svg>Probar con un manuscrito de ejemplo</button>
+    </div>
+  </div>
+  <h2 class="sec-title">Qué comprueba</h2>
+  <p class="sec-sub">Dos tipos de control. Los exactos no dependen de la IA: o cuadra o no cuadra.</p>
+  <div class="agentes">
+    <div class="ag det" style="--c:#6B4FD8"><span class="kind">exacto</span><span class="pi"><svg class="i"><use href="#i-scale"/></svg></span><b>Estadística recalculada</b><span>Recalcula p a partir de t, F, χ², r y z con sus grados de libertad. Detecta errores que cambian la conclusión.</span></div>
+    <div class="ag det" style="--c:#0E8C7A"><span class="kind">exacto</span><span class="pi"><svg class="i"><use href="#i-check"/></svg></span><b>Coherencia numérica</b><span>Porcentajes que no cuadran con sus recuentos, estimaciones fuera de su IC 95 %, IC que contradicen al valor p.</span></div>
+    <div class="ag det" style="--c:#1F6FB2"><span class="kind">exacto</span><span class="pi"><svg class="i"><use href="#i-book"/></svg></span><b>Citas y referencias</b><span>Cada referencia se busca en OpenAlex y Crossref: inexistentes, retractadas, año o autor equivocados, citas sin referencia.</span></div>
+    <div class="ag" style="--c:#C98200"><span class="kind">agente</span><span class="pi"><svg class="i"><use href="#i-target"/></svg></span><b>Afirmación frente a fuente</b><span>Compara lo que atribuyes a un trabajo con su resumen real. Si el resumen no basta, lo dice.</span></div>
+    <div class="ag" style="--c:#E4572E"><span class="kind">agentes</span><span class="pi"><svg class="i"><use href="#i-eye"/></svg></span><b>Seis lentes de lectura</b><span>Exactitud, razonamiento matemático, método y estadística, consistencia, referencias y argumentación, en paralelo.</span></div>
+    <div class="ag" style="--c:#0F2237"><span class="kind">agente</span><span class="pi"><svg class="i"><use href="#i-shield"/></svg></span><b>Filtro anti-ruido</b><span>Un verificador descarta lo genérico o lo que no se sostiene. Cada comentario se ancla a una cita literal.</span></div>
+  </div>
+  <div class="flowline"><span>Leer</span>→<span>Recalcular</span>→<span>Verificar referencias</span>→<span>Contrastar fuentes</span>→<span>Lentes</span>→<span>Contrastar secciones</span>→<span>Filtrar</span>→<span>Resolver</span></div>
+  <h2 class="sec-title">Y después</h2>
+  <div class="idea" style="grid-template-columns:repeat(3,1fr)">
+    <div><p class="k">Resolver</p><b>Corrección en el texto</b><span>RefinIA propone el pasaje reescrito, con evidencia de OpenAlex si hace falta, y ves el cambio palabra a palabra.</span></div>
+    <div><p class="k">Responder</p><b>Carta a los revisores</b><span>Exporta el informe, la carta de respuesta y el registro de cambios aplicados.</span></div>
+    <div><p class="k">Comprobar</p><b>La versión revisada</b><span>Sube la nueva versión y RefinIA te dice qué comentarios quedan resueltos.</span></div>
+  </div>
+</section>
 
-        <div class="drop" id="drop">
-          <p>Arrastra aquí un PDF, un DOCX o un archivo de texto</p>
-          <button class="btn" id="btnFile">Elegir archivo</button>
-          <input type="file" id="file" accept=".pdf,.docx,.txt,.md,.tex" hidden>
+<!-- ═════ 1 · AJUSTES ═════ -->
+<section class="screen" data-step="1">
+  <header class="sh" style="--c:#E4572E"><div class="sh-ico"><svg class="i"><use href="#i-key"/></svg></div>
+    <div><p class="sh-step">Paso previo</p><h2>Clave y ajustes</h2><p class="sh-lede">La clave se guarda solo en este navegador y las peticiones van directas a OpenAI. Los ajustes avanzados pueden quedarse como están.</p></div></header>
+  <div class="cols">
+    <div>
+      <div class="card">
+        <h3><span class="num">1</span>Clave de OpenAI</h3>
+        <div class="keyrow"><input type="password" id="sKey" placeholder="sk-proj-…" autocomplete="off" spellcheck="false"><button class="eye" id="btnEye" type="button" aria-label="Mostrar u ocultar"><svg class="i"><use href="#i-eye"/></svg></button></div>
+        <div class="actions" style="margin-top:12px"><button class="btn btn-dark btn-sm" id="btnTest" type="button"><svg class="i"><use href="#i-check"/></svg>Comprobar clave</button></div>
+        <div class="light" id="keyLight" data-s=""><span class="bulbo"></span><span id="keyMsg">Sin comprobar</span></div>
+      </div>
+      <details class="acc">
+        <summary><span class="ai"><svg class="i"><use href="#i-sliders"/></svg></span><span><b>Ajustes avanzados</b><small>Modelo, paralelismo, tamaño de los pasajes, umbral y fuentes externas</small></span><svg class="i chev"><use href="#i-down"/></svg></summary>
+        <div class="inner">
+          <div class="grid2">
+            <div class="field"><label for="sModel">Modelo</label><input type="text" id="sModel" list="mlist"><datalist id="mlist"><option value="gpt-6-luna"><option value="gpt-4.1"><option value="gpt-4.1-mini"><option value="gpt-4o-mini"></datalist></div>
+            <div class="field"><label for="sBase">URL base de la API</label><input type="text" id="sBase"></div>
+            <div class="field"><label for="sConc">Peticiones en paralelo</label><input type="number" id="sConc" min="1" max="16"></div>
+            <div class="field"><label for="sChunk">Palabras por pasaje</label><input type="number" id="sChunk" min="200" max="2000"><p class="help">Más cortos: comentarios más finos. Más largos: mejor hilo del argumento.</p></div>
+            <div class="field"><label for="sConf">Confianza mínima de un comentario</label><input type="number" id="sConf" min="0" max="1" step="0.05"></div>
+            <div class="field"><label for="sEnrich">Evidencia externa al resolver</label><select id="sEnrich"><option value="openalex">OpenAlex · literatura académica</option><option value="tavily">Tavily · web (con clave)</option><option value="ambas">Ambas</option><option value="off">Ninguna</option></select></div>
+            <div class="field"><label for="sMail">Correo para OpenAlex <small>(opcional)</small></label><input type="text" id="sMail" placeholder="nombre@universidad.es"><p class="help">OpenAlex atiende antes a quien se identifica. No se envía a ningún otro sitio.</p></div>
+            <div class="field"><label for="sTavily">Clave de Tavily <small>(opcional)</small></label><input type="password" id="sTavily"></div>
+          </div>
         </div>
-        <textarea class="paste" id="paste" placeholder="…o pega aquí el texto del manuscrito"></textarea>
+      </details>
+    </div>
+    <div class="card sticky">
+      <h3><svg class="i"><use href="#i-help"/></svg>¿No tienes clave?</h3>
+      <ol class="olsteps"><li><span>Entra en <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a>.</span></li><li><span>Añade saldo en <b>Billing</b>. Revisar un artículo cuesta entre céntimos y un par de euros.</span></li><li><span>Pulsa <b>Create new secret key</b> y pégala aquí.</span></li></ol>
+      <div class="tip" style="margin:16px 0 0"><svg class="i"><use href="#i-bulb"/></svg><span>Sin clave puedes usar las <b>comprobaciones exactas</b>: estadística, coherencia numérica, citas y referencias.</span></div>
+    </div>
+  </div>
+</section>
 
+<!-- ═════ 2 · MANUSCRITO ═════ -->
+<section class="screen" data-step="2">
+  <header class="sh" style="--c:#1F6FB2"><div class="sh-ico"><svg class="i"><use href="#i-upload"/></svg></div>
+    <div><p class="sh-step">Paso 1 de 3</p><h2>Tu manuscrito</h2><p class="sh-lede">PDF, Word o texto. Se lee en tu navegador. Incluye la bibliografía: sin ella no se pueden verificar las referencias.</p></div></header>
+  <div class="card">
+    <label class="drop" id="drop" tabindex="0"><svg class="i"><use href="#i-upload"/></svg><b id="dropT">Arrastra aquí un PDF, un DOCX o un archivo de texto</b><span id="dropS">o pulsa para elegirlo</span><input type="file" id="file" accept=".pdf,.docx,.txt,.md" hidden></label>
+    <button id="btnFile" type="button" class="hidden">Elegir archivo</button>
+    <p class="help" style="margin-top:10px">¿Sin manuscrito a mano? <a href="#" id="lnkEj">Carga el ejemplo</a>: un artículo breve con errores sembrados.</p>
+  </div>
+  <div class="card">
+    <h3><span class="num">1</span>Texto</h3>
+    <div class="field"><label for="paste">Puedes pegarlo o corregir la extracción del PDF <small id="docname"></small></label><textarea id="paste" style="min-height:220px;font-family:var(--serif);font-size:14.5px;line-height:1.6" placeholder="Pega aquí el texto completo del manuscrito, con la bibliografía."></textarea></div>
+    <div class="field" style="margin:0"><label for="ctx">Contexto <small>(opcional: tipo de trabajo, revista, lo que más te preocupa)</small></label><textarea id="ctx" style="min-height:64px" placeholder="Artículo original para una revista de nutrición. Diseño transversal. Me preocupa la sección de resultados."></textarea></div>
+  </div>
+</section>
+
+<!-- ═════ 3 · REVISIÓN ═════ -->
+<section class="screen" data-step="3">
+  <header class="sh" style="--c:#6B4FD8"><div class="sh-ico"><svg class="i"><use href="#i-sliders"/></svg></div>
+    <div><p class="sh-step">Paso 2 de 3</p><h2>Qué revisar</h2><p class="sh-lede">Las comprobaciones exactas son rápidas y casi gratuitas. Las lentes de lectura usan más consultas a la IA y encuentran problemas de fondo.</p></div></header>
+  <div class="cols">
+    <div>
+      <div class="card">
+        <h3><span class="num">1</span>Comprobaciones de exactitud</h3>
+        <div class="lenses" id="exChecks"></div>
+      </div>
+      <div class="card">
+        <h3><span class="num">2</span>Lentes de lectura</h3>
+        <p class="sub">Cada lente lee todos los pasajes buscando un tipo de problema.</p>
         <div class="lenses" id="lenses"></div>
-
-        <div class="row">
-          <div class="field">
-            <label for="depth">Profundidad</label>
-            <select id="depth">
-              <option value="rapida">Rápida · una pasada, sin verificación</option>
-              <option value="estandar" selected>Estándar · todas las lentes + verificación</option>
-              <option value="profunda">Profunda · doble muestreo y corroboración</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="lang">Idioma de los comentarios</label>
-            <select id="lang">
-              <option value="auto">El del documento</option>
-              <option value="es">Español</option>
-              <option value="en">Inglés</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="ctx">Contexto (opcional)</label>
-            <input id="ctx" placeholder="revista, disciplina, tipo de trabajo" style="width:230px">
-          </div>
-        </div>
-        <div class="estimate" id="estimate"></div>
-        <div class="row">
-          <button class="btn primary" id="btnRun" disabled>Revisar documento</button>
-          <span class="estimate" id="keywarn"></span>
-        </div>
       </div>
-      <div class="recent" id="recent"></div>
-    </div>
-    <div id="sheetHost"></div>
-  </div>
-
-  <div class="spine" id="spine"></div>
-
-  <aside class="side" id="side">
-    <header>
-      <div class="tally"><b id="tallyN">0</b><span id="tallyT">comentarios</span></div>
-      <div class="filters" id="filters"></div>
-    </header>
-    <div class="list" id="list">
-      <div class="empty">
-        <h3>Todavía no hay revisión</h3>
-        <p>Carga un manuscrito y ejecuta la revisión. Los comentarios aparecerán aquí, anclados al punto exacto del texto.</p>
+      <div class="card">
+        <h3><span class="num">3</span>Profundidad e idioma</h3>
+        <div class="grid2">
+          <div class="field"><label for="depth">Profundidad</label><select id="depth"><option value="exactitud">Solo exactitud · sin lentes, rápida</option><option value="rapida">Rápida · una pasada sin filtro</option><option value="estandar" selected>Estándar · lentes y filtro anti-ruido</option><option value="profunda">Profunda · doble lectura y corroboración</option></select></div>
+          <div class="field"><label for="lang">Idioma de los comentarios</label><select id="lang"><option value="auto">El del documento</option><option value="es">Español</option><option value="en">Inglés</option></select></div>
+        </div>
+        <p class="estimate" id="estimate"></p><p class="help" id="keywarn" style="color:var(--brasa)"></p>
       </div>
     </div>
-  </aside>
-</div>
-
-<dialog id="dlgSettings">
-  <div class="dh"><h2>Ajustes</h2><button class="btn ghost sm" data-close>Cerrar</button></div>
-  <div class="db">
-    <label class="f"><span>Clave de API de OpenAI</span>
-      <input type="password" id="sKey" placeholder="sk-…" autocomplete="off">
-      <small class="hint">Se guarda sólo en este navegador (localStorage, clave <code>ia_openai_key</code>). Las peticiones van directamente de tu navegador a OpenAI: no hay servidor intermedio.</small>
-    </label>
-    <label class="f"><span>Modelo</span><input id="sModel" placeholder="gpt-6-luna"></label>
-    <label class="f"><span>URL base de la API</span><input id="sBase" placeholder="https://api.openai.com/v1"></label>
-    <label class="f"><span>Peticiones en paralelo</span><input id="sConc" type="number" min="1" max="16"></label>
-    <label class="f"><span>Palabras por pasaje</span>
-      <input id="sChunk" type="number" min="200" max="2000" step="50">
-      <small class="hint">Pasajes más cortos dan comentarios más finos y más llamadas; más largos ven mejor el hilo del argumento.</small>
-    </label>
-    <label class="f"><span>Umbral de confianza para publicar un comentario</span>
-      <input id="sConf" type="number" min="0" max="1" step="0.05">
-    </label>
-    <label class="f"><span>Evidencia externa al resolver un comentario</span>
-      <select id="sEnrich">
-        <option value="openalex">OpenAlex · literatura académica (sin clave)</option>
-        <option value="tavily">Tavily · búsqueda web (requiere clave)</option>
-        <option value="ambas">Ambas</option>
-        <option value="off">Ninguna · resolver sólo con el texto del manuscrito</option>
-      </select>
-      <small class="hint">Antes de reescribir el pasaje, RefinIA busca fuentes que respalden la corrección. Sólo puede citar lo que aparezca en esos resultados.</small>
-    </label>
-    <label class="f"><span>Correo para el «polite pool» de OpenAlex (opcional)</span>
-      <input id="sMail" placeholder="tu@universidad.es" autocomplete="off">
-      <small class="hint">OpenAlex da prioridad a las peticiones que se identifican con un correo. No se envía a ningún otro sitio.</small>
-    </label>
-    <label class="f"><span>Clave de API de Tavily (opcional)</span>
-      <input type="password" id="sTavily" placeholder="tvly-…" autocomplete="off">
-      <small class="hint">Se guarda sólo en este navegador (<code>ia_tavily_key</code>). Si Tavily bloquea la petición desde el navegador (CORS), usa OpenAlex.</small>
-    </label>
+    <aside class="card sticky sum">
+      <h3><svg class="i"><use href="#i-play"/></svg>Listo para revisar</h3>
+      <p class="help">La revisión se hace pasaje a pasaje y puedes seguirla en directo. Puedes detenerla en cualquier momento y conservar lo encontrado.</p>
+      <button class="btn btn-primary btn-big" id="btnRun" type="button" style="width:100%;justify-content:center"><svg class="i"><use href="#i-play"/></svg>Revisar el documento</button>
+    </aside>
   </div>
-  <div class="df"><button class="btn" data-close>Cancelar</button><button class="btn primary" id="sSave">Guardar ajustes</button></div>
-</dialog>
+</section>
 
+<!-- ═════ 4 · INFORME (espacio de trabajo) ═════ -->
+<section class="screen" data-step="4">
+  <div class="wsbar">
+    <span class="dn" id="wsName">Manuscrito</span>
+    <button class="btn btn-sm" id="btnCancel" type="button" style="display:none">Detener</button>
+    <button class="btn btn-sm" id="btnUndo" type="button" style="display:none">Deshacer cambio</button>
+    <button class="btn btn-sm" id="btnRevision" type="button" style="display:none">Comparar con la versión revisada</button>
+    <button class="btn btn-sm" id="btnReRun" type="button">Volver a revisar</button>
+    <button class="btn btn-primary btn-sm" id="btnExport" type="button" style="display:none">Exportar</button>
+    <button class="btn btn-sm" id="btnNew" type="button">Nuevo documento</button>
+  </div>
+  <div class="wsprog" id="progress"><span class="spin"></span><span id="ptext">Leyendo…</span><span class="bar"><span id="pbar"></span></span></div>
+  <div class="mobtabs"><button type="button" id="tabDoc" aria-pressed="true">Documento</button><button type="button" id="tabSide" aria-pressed="false">Comentarios</button></div>
+  <div class="ws-grid">
+    <div id="docpane"><div id="start" class="empty"><h3>Sin documento</h3><p>Carga un manuscrito en el paso 1.</p></div><div id="sheetHost"></div></div>
+    <div class="spine" id="spine"></div>
+    <aside id="side">
+      <div class="sidetabs"><button type="button" data-st="com" aria-pressed="true">Comentarios</button><button type="button" data-st="ex" aria-pressed="false">Exactitud</button></div>
+      <div id="paneCom"><div class="tally"><b id="tallyN">0</b><span id="tallyT">comentarios</span></div><div id="filters"></div><div id="list"></div></div>
+      <div id="paneEx" class="hidden"><div id="exactBox"></div></div>
+    </aside>
+  </div>
+</section>
+</main>
+
+<footer><hr><p>RefinIA 2.0 · Herramientas IA para la academia · Fernando Borrás Rocher · Universidad Miguel Hernández de Elche. Aplicación de un solo fichero, sin servidor: el texto va de tu navegador a OpenAI; las referencias se consultan en OpenAlex y Crossref. Las comprobaciones exactas no sustituyen al juicio del autor: revisa cada comentario antes de actuar.</p></footer>
+
+<div class="bottomnav"><div class="bn-in">
+  <button class="btn btn-ghost" id="navBack" type="button"><svg class="i"><use href="#i-left"/></svg>Atrás</button>
+  <div class="bn-hint" id="navHint"></div>
+  <button class="btn btn-primary" id="navNext" type="button"><span id="navNextTxt">Siguiente</span><svg class="i"><use href="#i-right"/></svg></button>
+</div></div>
+
+<div class="modal" id="mHelp" role="dialog" aria-modal="true" aria-labelledby="mHelpT"><div class="modal-box">
+  <div class="modal-head"><h2 id="mHelpT">Ayuda</h2><button type="button" data-mclose>Cerrar</button></div>
+  <div class="modal-body"><div class="glos" id="glos"></div></div></div></div>
+<div class="modal" id="mRecent" role="dialog" aria-modal="true" aria-labelledby="mRecentT"><div class="modal-box">
+  <div class="modal-head"><h2 id="mRecentT">Mis revisiones</h2><button type="button" data-mclose>Cerrar</button></div>
+  <div class="modal-body"><p class="help" style="margin:0 0 12px">Se guardan en este navegador.</p><div id="recent"></div></div></div></div>
 <dialog id="dlgChat">
   <div class="dh"><h2>Preguntar sobre este comentario</h2><button class="btn ghost sm" data-close>Cerrar</button></div>
   <div class="db">
@@ -449,8 +947,7 @@ dialog small.hint{display:block;color:var(--ink-3);font-size:12px;margin-top:4px
   </div>
   <div class="df"><button class="btn" data-close>Cerrar</button><button class="btn primary" id="chatSend">Enviar</button></div>
 </dialog>
-
-<dialog id="dlgFix">
+<dialog id="dlgFix" class="wide">
   <div class="dh"><h2>Resolver el comentario en el documento</h2><button class="btn ghost sm" data-close>Cerrar</button></div>
   <div class="db">
     <div class="fixhead" id="fixHead"></div>
@@ -468,7 +965,6 @@ dialog small.hint{display:block;color:var(--ink-3);font-size:12px;margin-top:4px
     <button class="btn primary" id="fixApply">Aplicar y marcar resuelto</button>
   </div>
 </dialog>
-
 <dialog id="dlgExport">
   <div class="dh"><h2>Exportar la revisión</h2><button class="btn ghost sm" data-close>Cerrar</button></div>
   <div class="db">
@@ -484,7 +980,6 @@ dialog small.hint{display:block;color:var(--ink-3);font-size:12px;margin-top:4px
   </div>
   <div class="df"><button class="btn" data-close>Cerrar</button></div>
 </dialog>
-
 <dialog id="dlgRevision">
   <div class="dh"><h2>Comparar con la versión revisada</h2><button class="btn ghost sm" data-close>Cerrar</button></div>
   <div class="db">
@@ -498,8 +993,9 @@ dialog small.hint{display:block;color:var(--ink-3);font-size:12px;margin-top:4px
   </div>
   <div class="df"><button class="btn" data-close>Cerrar</button><button class="btn primary" id="revRun" disabled>Comprobar cambios</button></div>
 </dialog>
-
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
+
 /* ============================================================
    RefinIA — verificación de manuscritos con OpenAI (gpt-6-luna)
    Fichero único, sin servidor. Fernando Borrás Rocher · UMH
@@ -515,10 +1011,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const words = t => (t.trim().match(/\S+/g) || []).length;
 const norm = t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
 
-function toast(msg, ms = 2600) {
-  const t = document.createElement('div');
-  t.className = 'toast'; t.textContent = msg; document.body.appendChild(t);
-  setTimeout(() => t.remove(), ms);
+function toast(msg, ms = 3200) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('on'), ms);
 }
 
 /* ---------- ajustes ---------- */
@@ -603,7 +1098,8 @@ async function persist() {
     context: state.doc.context || '',
     findings: state.findings,
     edits: state.edits.map(e => ({ resumen: e.resumen, ts: e.ts, findingId: e.findingId })),
-    usage: state.usage
+    usage: state.usage,
+    exact: state.exact || null
   };
   try { await DB.put(rec); } catch (e) { console.warn('persist', e); }
 }
@@ -787,9 +1283,21 @@ function segment(text) {
     const start = clean.indexOf(rb, pos);
     const s = start < 0 ? pos : start;
     pos = s + rb.length;
-    const t = rb.trim();
+    let t = rb.trim();
     if (!t) return;
-    const lines = t.split('\n');
+    let lines = t.split('\n');
+    /* título pegado a su primer párrafo, sin línea en blanco: se separa */
+    if (lines.length > 1 && isHeadingLine(lines[0]) && lines.slice(1).join(' ').trim().split(/\s+/).length > 8) {
+      const h0 = lines[0], hs = clean.indexOf(h0, s);
+      section = h0.replace(/^#{1,6}\s+/, '').trim();
+      blocks.push({ id: 'b' + blocks.length, kind: 'head', level: headingLevel(h0), section, text: h0.trim(), start: hs, end: hs + h0.length });
+      const restStart = clean.indexOf(lines[1], hs + h0.length);
+      t = clean.slice(restStart, s + rb.length).trim(); lines = t.split('\n');
+      const off = clean.indexOf(t, restStart);
+      const tabular = lines.length > 2 && lines.filter(l => /\t|\s{3,}|\d\s+\d/.test(l)).length >= lines.length * 0.6;
+      blocks.push({ id: 'b' + blocks.length, kind: tabular ? 'tabular' : 'p', level: 0, section, text: t, start: off, end: off + t.length });
+      return;
+    }
     const head = lines.length <= 2 && isHeadingLine(lines[0]);
     if (head) section = lines[0].replace(/^#{1,6}\s+/, '').trim();
     const tabular = !head && (lines.length > 2 && lines.filter(l => /\t|\s{3,}|\d\s+\d/.test(l)).length >= lines.length * 0.6);
@@ -972,15 +1480,26 @@ Devuelve JSON:
    5. Canalización
    ============================================================ */
 async function runReview() {
-  if (!S.key) { toast('Añade tu clave de API en Ajustes'); openSettings(); return; }
   const doc = state.doc;
   const depth = $('#depth') ? $('#depth').value : 'estandar';
+  if (!S.key && depth !== 'exactitud') { toast('Sin clave solo se pueden hacer las comprobaciones exactas: elige «Solo exactitud» o añade la clave'); go(1); return; }
   const active = LENSES.filter(l => l.on);
-  if (!active.length) { toast('Selecciona al menos una lente'); return; }
+  if (!active.length && depth !== 'exactitud') { toast('Selecciona al menos una lente'); return; }
 
   state.running = true; state.abort = false; state.findings = []; state.usage = { in: 0, out: 0, calls: 0 };
   $('#btnCancel').style.display = ''; $('#btnRun') && ($('#btnRun').disabled = true);
   renderFindings();
+
+  /* --- fase 0: comprobaciones exactas (estadística, números, citas, referencias, fuentes) --- */
+  let exFind = [];
+  try { exFind = await faseExactitud(doc, depth); } catch (e) { console.warn('exactitud', e); toast('Las comprobaciones exactas no se completaron: ' + e.message); }
+  if (state.abort) { state.findings = exFind; await persist(); endRun(); renderDoc(); renderFindings(); renderExact(); return; }
+  if (depth === 'exactitud') {
+    state.findings = exFind.sort((a, b) => (a.start ?? 1e9) - (b.start ?? 1e9));
+    await persist(); endRun(); renderDoc(); renderFindings(); renderExact();
+    toast(exFind.length ? `Comprobación exacta terminada: ${exFind.length} avisos` : 'Comprobación exacta terminada sin errores');
+    return;
+  }
 
   const idx = buildIndex(doc.text);
   const samples = depth === 'profunda' ? 2 : 1;
@@ -1089,12 +1608,15 @@ async function runReview() {
     });
   }
 
-  finalFindings.forEach(h => { h.estado = 'pendiente'; });
+  /* lo exacto prevalece: se retiran los comentarios de las lentes que caen sobre el mismo tramo */
+  finalFindings = finalFindings.filter(h => !exFind.some(x => x.start != null && h.start != null && h.start < x.end && h.end > x.start && /Estad|Coherencia|Referencia|Cita/.test(x.categoria) && /exactitud|metodo|referencias|consistencia/.test(h.lente)));
+  finalFindings = finalFindings.concat(exFind);
+  finalFindings.forEach(h => { h.estado = h.estado || 'pendiente'; if (h.start != null) h.section = secAt(doc, h.start); });
   finalFindings.sort((a, b) => (a.start ?? 1e9) - (b.start ?? 1e9));
   state.findings = finalFindings;
   await persist();
   endRun();
-  renderDoc(); renderFindings();
+  renderDoc(); renderFindings(); renderExact();
   toast(finalFindings.length ? `Revisión terminada: ${finalFindings.length} comentarios` : 'Revisión terminada sin hallazgos que sostener');
 }
 
@@ -1126,7 +1648,7 @@ function jaccard(a, b) {
 }
 
 function endRun() {
-  state.running = false;
+  state.running = false; busy = false; buildStepper();
   $('#btnCancel').style.display = 'none';
   $('#progress').classList.remove('on');
   if ($('#btnRun')) $('#btnRun').disabled = false;
@@ -1280,12 +1802,12 @@ function renderFindings() {
     return;
   }
   list.innerHTML = vis.map(cardHTML).join('');
-  $$('#list .card').forEach(c => {
+  $$('#list .rc').forEach(c => {
     c.addEventListener('click', e => { if (e.target.closest('button')) return; selectFinding(c.dataset.id, 'list'); });
   });
   $$('#list [data-act]').forEach(b => b.addEventListener('click', e => {
     e.stopPropagation();
-    const id = b.closest('.card').dataset.id, act = b.dataset.act;
+    const id = b.closest('.rc').dataset.id, act = b.dataset.act;
     const h = state.findings.find(x => x.id === id);
     if (act === 'chat') return openChat(h);
     if (act === 'fix') return openFix(h);
@@ -1297,13 +1819,14 @@ function renderFindings() {
 
 function cardHTML(h) {
   const conf = h.confianza != null ? Math.round(h.confianza * 100) + '% de confianza' : '';
-  return `<article class="card s-${h.severidad || 'baja'} st-${h.estado} ${h.aplicado ? 'applied' : ''} ${state.active === h.id ? 'active' : ''}" data-id="${h.id}">
+  return `<article class="rc s-${h.severidad || 'baja'} st-${h.estado} ${h.aplicado ? 'applied' : ''} ${state.active === h.id ? 'active' : ''}" data-id="${h.id}">
     <div class="meta">
       <span class="sev ${h.severidad || 'baja'}">${{ alta: 'Alta', media: 'Media', baja: 'Baja' }[h.severidad] || 'Baja'}</span>
       <span class="cat">${esc(h.categoria)}</span>
       <span>${esc(h.section || '')}</span>
     </div>
     <h4>${esc(h.titulo)}</h4>
+    ${h.exacto ? '<span class="exacto" style="display:inline-block;margin-bottom:6px">comprobación exacta</span>' : ''}
     ${h.cita ? `<blockquote>${esc(h.cita)}</blockquote>` : ''}
     <p>${esc(h.comentario)}</p>
     ${h.sugerencia ? `<div class="fix"><strong>Sugerencia.</strong> ${esc(h.sugerencia)}</div>` : ''}
@@ -1325,9 +1848,9 @@ function cardHTML(h) {
 function selectFinding(id, from, scroll) {
   state.active = id;
   $$('#sheet mark.f').forEach(m => m.classList.toggle('active', m.dataset.id === id));
-  $$('#list .card').forEach(c => c.classList.toggle('active', c.dataset.id === id));
+  $$('#list .rc').forEach(c => c.classList.toggle('active', c.dataset.id === id));
   if (from !== 'list' || scroll) {
-    const card = document.querySelector(`#list .card[data-id="${id}"]`);
+    const card = document.querySelector(`#list .rc[data-id="${id}"]`);
     if (card) card.scrollIntoView({ block: 'center', behavior: 'smooth' });
   }
   if (from !== 'doc') {
@@ -1714,7 +2237,7 @@ async function undoLastEdit() {
 function updateDocMeta() {
   const n = state.edits.length;
   $('#btnUndo').style.display = n ? '' : 'none';
-  if (state.doc) $('#docname').textContent = state.doc.name + (n ? ` · ${n} cambio${n > 1 ? 's' : ''} aplicado${n > 1 ? 's' : ''}` : '');
+  if (state.doc) $('#wsName').textContent = state.doc.name + (n ? ` · ${n} cambio${n > 1 ? 's' : ''} aplicado${n > 1 ? 's' : ''}` : '');
 }
 
 /* ============================================================
@@ -1836,12 +2359,12 @@ Responde JSON: {"estado":"resuelto|parcial|sin_cambios|no_localizado","explicaci
 /* ============================================================
    11. Ajustes, carga de documentos e inicialización
    ============================================================ */
-function openSettings() {
+function openSettings() { go(1); }
+function fillSettings() {
   $('#sKey').value = S.key;
   $('#sModel').value = cfg.model; $('#sBase').value = cfg.base;
   $('#sConc').value = cfg.conc; $('#sChunk').value = cfg.chunkWords; $('#sConf').value = cfg.minConf;
   $('#sEnrich').value = cfg.enrich || DEF.enrich; $('#sMail').value = cfg.mailto || ''; $('#sTavily').value = S.tavily;
-  $('#dlgSettings').showModal();
 }
 function saveSettings() {
   S.key = $('#sKey').value.trim();
@@ -1852,13 +2375,12 @@ function saveSettings() {
     chunkWords: Math.max(200, Math.min(2000, +$('#sChunk').value || DEF.chunkWords)),
     minConf: Math.max(0, Math.min(1, +$('#sConf').value || DEF.minConf)),
     enrich: $('#sEnrich').value || DEF.enrich,
-    mailto: $('#sMail').value.trim()
+    mailto: $('#sMail').value.trim(),
+    ex: cfg.ex
   };
   S.tavily = $('#sTavily').value.trim();
   S.save(cfg);
-  $('#dlgSettings').close();
   updateKeyWarn(); updateEstimate();
-  toast('Ajustes guardados');
 }
 
 let pending = null; // {name,text}
@@ -1868,13 +2390,15 @@ function loadIntoApp(name, text) {
   $('#paste').value = text.length > 200000 ? text.slice(0, 200000) : text;
   $('#docname').textContent = name;
   updateEstimate();
-  $('#btnRun').disabled = !S.key;
+  $('#btnRun').disabled = false;
+  $('#dropT').textContent = name; $('#dropS').textContent = `${words(text).toLocaleString('es-ES')} palabras · pulsa para cambiar de archivo`;
 }
 
 function updateEstimate() {
   const text = pending ? pending.text : $('#paste').value;
   const est = $('#estimate');
-  if (!text || words(text) < 60) { est.textContent = ''; $('#btnRun').disabled = true; return; }
+  if (!text || words(text) < 60) { est.textContent = 'Carga antes un manuscrito.'; $('#btnRun').disabled = true; return; }
+  if ($('#depth').value === 'exactitud') { const nref = extraerReferencias(text).entradas.length; est.textContent = `${words(text).toLocaleString('es-ES')} palabras · ${nref} referencias · sin lentes · ${exOpts().claims && S.key ? 'unas ' + Math.max(1, Math.ceil(nref / 6)) + ' consultas a la IA' : 'sin consultas a la IA'}`; $('#btnRun').disabled = false; return; }
   const seg = segment(text);
   const chunks = chunkify(seg.blocks, cfg.chunkWords);
   const lenses = LENSES.filter(l => l.on).length;
@@ -1882,11 +2406,11 @@ function updateEstimate() {
   const samples = depth === 'profunda' ? 2 : 1;
   const calls = chunks.length * (1 + lenses * samples) + 2 + (depth === 'rapida' ? 0 : chunks.length);
   const inTok = words(text) * 1.4 * (1 + lenses * samples) + calls * 400;
-  est.textContent = `${words(text).toLocaleString('es-ES')} palabras · ${chunks.length} pasajes · ${lenses} lentes · ≈${calls} llamadas · coste estimado ≈${estimateCost(inTok, calls * 350)} $ con ${cfg.model}`;
-  $('#btnRun').disabled = !S.key;
+  est.textContent = `${words(text).toLocaleString('es-ES')} palabras · ${chunks.length} pasajes · ${lenses} lentes · ≈${calls} consultas · coste estimado ≈${estimateCost(inTok, calls * 350)} $ con ${cfg.model}`;
+  $('#btnRun').disabled = false;
 }
 function updateKeyWarn() {
-  $('#keywarn').textContent = S.key ? '' : 'Necesitas una clave de API de OpenAI (Ajustes) para ejecutar la revisión.';
+  $('#keywarn').textContent = S.key ? '' : 'Sin clave de OpenAI solo puedes usar «Solo exactitud».';
 }
 
 async function startReview() {
@@ -1901,20 +2425,23 @@ async function startReview() {
   };
   state.findings = [];
   state.edits = [];
-  $('#docname').textContent = name;
+  state.exact = null;
+  $('#docname').textContent = name; $('#wsName').textContent = name;
   $('#btnExport').style.display = ''; $('#btnRevision').style.display = '';
-  renderDoc(); renderFindings();
+  busy = true; go(4); buildStepper();
+  renderDoc(); renderFindings(); renderExact();
   await runReview();
+  busy = false; buildStepper();
 }
 
 async function renderRecent() {
   let all = [];
   try { all = await DB.all(); } catch (e) { return; }
   const box = $('#recent');
-  if (!all || !all.length) { box.innerHTML = ''; return; }
+  if (!all || !all.length) { box.innerHTML = '<p class="empty">Todavía no hay revisiones guardadas.</p>'; return; }
   all.sort((a, b) => b.updatedAt - a.updatedAt);
-  box.innerHTML = '<h3>Revisiones guardadas en este navegador</h3>' + all.slice(0, 8).map(d =>
-    `<a href="#" data-id="${d.id}">${esc(d.name)} <span>${(d.findings || []).length} comentarios · ${new Date(d.updatedAt).toLocaleDateString('es-ES')}</span></a>`).join('');
+  box.innerHTML = all.slice(0, 20).map(d =>
+    `<a href="#" class="hist" data-id="${d.id}" style="text-decoration:none;color:inherit"><span class="hist-t"><b>${esc(d.name)}</b><span>${(d.findings || []).length} comentarios · ${new Date(d.updatedAt).toLocaleDateString('es-ES')}</span></span></a>`).join('');
   $$('#recent a').forEach(a => a.addEventListener('click', async e => {
     e.preventDefault();
     const rec = await DB.get(a.dataset.id);
@@ -1923,9 +2450,10 @@ async function renderRecent() {
     state.findings = rec.findings || [];
     state.usage = rec.usage || { in: 0, out: 0, calls: 0 };
     state.edits = [];
-    $('#docname').textContent = rec.name;
+    state.exact = rec.exact || null;
+    $('#wsName').textContent = rec.name;
     $('#btnExport').style.display = ''; $('#btnRevision').style.display = '';
-    refresh();
+    closeModals(); go(4); refresh(); renderExact();
   }));
 }
 
@@ -1940,6 +2468,7 @@ function init() {
   }));
 
   $('#btnFile').addEventListener('click', () => $('#file').click());
+  $('#drop').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('#file').click(); } });
   $('#file').addEventListener('change', async e => {
     const f = e.target.files[0]; if (!f) return;
     toast('Leyendo el archivo…');
@@ -1964,11 +2493,12 @@ function init() {
     $('#sheetHost').innerHTML = ''; $('#start').style.display = '';
     $('#docname').textContent = ''; $('#spine').innerHTML = '';
     $('#btnExport').style.display = 'none'; $('#btnRevision').style.display = 'none';
-    renderFindings(); renderRecent();
+    state.exact = null; $('#paste').value = ''; $('#dropT').textContent = 'Arrastra aquí un PDF, un DOCX o un archivo de texto'; $('#dropS').textContent = 'o pulsa para elegirlo';
+    renderFindings(); renderExact(); renderRecent(); go(2);
   });
   $('#btnCancel').addEventListener('click', () => { state.abort = true; toast('Deteniendo la revisión…'); });
-  $('#btnSettings').addEventListener('click', openSettings);
-  $('#sSave').addEventListener('click', saveSettings);
+  ['sKey','sModel','sBase','sConc','sChunk','sConf','sEnrich','sMail','sTavily'].forEach(id => $('#' + id).addEventListener('change', saveSettings));
+  $('#sKey').addEventListener('input', () => { S.key = $('#sKey').value.trim(); setLight('', S.key ? 'Clave guardada · sin comprobar' : 'Sin clave'); updateKeyWarn(); });
   $('#btnExport').addEventListener('click', () => $('#dlgExport').showModal());
   $$('[data-exp]').forEach(b => b.addEventListener('click', () => { exportAs(b.dataset.exp); $('#dlgExport').close(); }));
   $('#btnUndo').addEventListener('click', undoLastEdit);
@@ -2009,10 +2539,426 @@ function init() {
   window.addEventListener('beforeunload', e => { if (state.running) { e.preventDefault(); e.returnValue = ''; } });
 
   updateKeyWarn(); renderFindings(); renderRecent();
-  if (!S.key) setTimeout(() => toast('Añade tu clave de OpenAI en Ajustes para empezar'), 700);
 }
-init();
 
+
+
+/* ══════════ COMPROBACIONES EXACTAS (sin IA) ══════════ */
+/* --- funciones de distribución (Numerical Recipes, precisión ~1e-10) --- */
+function lnGamma(x){ const c=[76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5]; let y=x, t=x+5.5; t-=(x+0.5)*Math.log(t); let s=1.000000000190015; for(let j=0;j<6;j++) s+=c[j]/++y; return -t+Math.log(2.5066282746310005*s/x); }
+function betacf(a,b,x){ const MAXIT=300, EPS=3e-14, FPMIN=1e-300; let qab=a+b, qap=a+1, qam=a-1, c=1, d=1-qab*x/qap; if(Math.abs(d)<FPMIN) d=FPMIN; d=1/d; let h=d;
+  for(let m=1;m<=MAXIT;m++){ const m2=2*m; let aa=m*(b-m)*x/((qam+m2)*(a+m2)); d=1+aa*d; if(Math.abs(d)<FPMIN) d=FPMIN; c=1+aa/c; if(Math.abs(c)<FPMIN) c=FPMIN; d=1/d; h*=d*c;
+    aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2)); d=1+aa*d; if(Math.abs(d)<FPMIN) d=FPMIN; c=1+aa/c; if(Math.abs(c)<FPMIN) c=FPMIN; d=1/d; const del=d*c; h*=del; if(Math.abs(del-1)<EPS) break; } return h; }
+function ibeta(x,a,b){ if(x<=0) return 0; if(x>=1) return 1; const bt=Math.exp(lnGamma(a+b)-lnGamma(a)-lnGamma(b)+a*Math.log(x)+b*Math.log(1-x));
+  return x<(a+1)/(a+b+2) ? bt*betacf(a,b,x)/a : 1-bt*betacf(b,a,1-x)/b; }
+function gammaQ(a,x){ if(x<=0) return 1; if(x<a+1){ let sum=1/a, del=sum, ap=a; for(let n=0;n<500;n++){ ap++; del*=x/ap; sum+=del; if(Math.abs(del)<Math.abs(sum)*3e-14) break; } return 1-sum*Math.exp(-x+a*Math.log(x)-lnGamma(a)); }
+  let b=x+1-a, c=1/1e-300, d=1/b, h=d; for(let i=1;i<500;i++){ const an=-i*(i-a); b+=2; d=an*d+b; if(Math.abs(d)<1e-300) d=1e-300; c=b+an/c; if(Math.abs(c)<1e-300) c=1e-300; d=1/d; const del=d*c; h*=del; if(Math.abs(del-1)<3e-14) break; } return Math.exp(-x+a*Math.log(x)-lnGamma(a))*h; }
+function erfc(x){ const z=Math.abs(x), t=1/(1+0.5*z); const r=t*Math.exp(-z*z-1.26551223+t*(1.00002368+t*(0.37409196+t*(0.09678418+t*(-0.18628806+t*(0.27886807+t*(-1.13520398+t*(1.48851587+t*(-0.82215223+t*0.17087277))))))))); return x>=0?r:2-r; }
+const pT = (t,df) => ibeta(df/(df+t*t), df/2, 0.5);             // bilateral
+const pF = (F,d1,d2) => ibeta(d2/(d2+d1*F), d2/2, d1/2);
+const pChi = (x,df) => gammaQ(df/2, x/2);
+const pZ = z => erfc(Math.abs(z)/Math.SQRT2);
+const pR = (r,df) => Math.abs(r)>=1 ? 0 : pT(r*Math.sqrt(df/(1-r*r)), df);
+
+/* --- lectura de números: 2,10 · 2.10 · ,002 · .002 · −1,5 --- */
+function numES(s){ if(s==null) return NaN; let t=String(s).trim().replace(/[−–—]/g,'-').replace(/\s/g,''); if(/^-?[.,]\d+$/.test(t)) t=t.replace(/^(-?)[.,]/,'$10.'); t=t.replace(',','.'); const v=parseFloat(t); return isFinite(v)?v:NaN; }
+function decs(s){ const m=String(s).match(/[.,](\d+)\s*$/); return m?m[1].length:0; }
+const NUM = '[-−–]?\\s?(?:\\d+(?:[.,]\\d+)?|[.,]\\d+)';
+
+/* --- statcheck: recalcula p a partir del estadístico y sus grados de libertad --- */
+const STAT_RX = [
+  {k:'t',  rx:new RegExp(`\\bt\\s*\\(\\s*(\\d+(?:[.,]\\d+)?)\\s*\\)\\s*=\\s*(${NUM})\\s*[,;]\\s*p\\s*([=<>≤≥])\\s*(${NUM})`,'gi')},
+  {k:'F',  rx:new RegExp(`\\bF\\s*\\(\\s*(\\d+(?:[.,]\\d+)?)\\s*[,;]\\s*(\\d+(?:[.,]\\d+)?)\\s*\\)\\s*=\\s*(${NUM})\\s*[,;]\\s*p\\s*([=<>≤≥])\\s*(${NUM})`,'gi')},
+  {k:'r',  rx:new RegExp(`\\br\\s*\\(\\s*(\\d+)\\s*\\)\\s*=\\s*(${NUM})\\s*[,;]\\s*p\\s*([=<>≤≥])\\s*(${NUM})`,'gi')},
+  {k:'chi',rx:new RegExp(`(?:χ\\s*2|χ²|chi\\s*2|chi²|chi-cuadrado|chi-square|X2)\\s*\\(\\s*(\\d+)(?:\\s*[,;]\\s*N\\s*=\\s*\\d+)?\\s*\\)\\s*=\\s*(${NUM})\\s*[,;]\\s*p\\s*([=<>≤≥])\\s*(${NUM})`,'gi')},
+  {k:'z',  rx:new RegExp(`\\bz\\s*=\\s*(${NUM})\\s*[,;]\\s*p\\s*([=<>≤≥])\\s*(${NUM})`,'gi')},
+];
+function pDe(k, v, g){ return k==='t'?pT(Math.abs(v),g[0]) : k==='F'?pF(v,g[0],g[1]) : k==='r'?pR(v,g[0]) : k==='chi'?pChi(v,g[0]) : pZ(v); }
+function statcheck(text, alfa=0.05){
+  const out=[];
+  STAT_RX.forEach(({k,rx}) => { rx.lastIndex=0; let m;
+    while((m=rx.exec(text))){
+      let g, sRaw, op, pRaw;
+      if(k==='F'){ g=[numES(m[1]),numES(m[2])]; sRaw=m[3]; op=m[4]; pRaw=m[5]; }
+      else if(k==='z'){ g=[]; sRaw=m[1]; op=m[2]; pRaw=m[3]; }
+      else { g=[numES(m[1])]; sRaw=m[2]; op=m[3]; pRaw=m[4]; }
+      const s=numES(sRaw), pr=numES(pRaw); if(!isFinite(s)||!isFinite(pr)||g.some(x=>!isFinite(x)||x<=0)) continue;
+      if(k==='r' && Math.abs(s)>1) { out.push({k,start:m.index,end:m.index+m[0].length,txt:m[0],estado:'error',msg:`Un coeficiente de correlación no puede valer ${sRaw.trim()}.`,grave:true}); continue; }
+      const u=0.5*Math.pow(10,-decs(sRaw)), sa=Math.abs(s);
+      const p0=pDe(k,s,g), pLo=pDe(k,sa+u,g), pHi=pDe(k,Math.max(0,sa-u),g);
+      const up=0.5*Math.pow(10,-decs(pRaw));
+      let ok;
+      if(op==='=') ok = pr-up <= pHi+1e-12 && pr+up >= pLo-1e-12;
+      else if(op==='<'||op==='≤') ok = pLo < pr+1e-12;
+      else ok = pHi > pr-1e-12;
+      let estado='ok', grave=false, uni=false;
+      if(!ok){
+        const sigRep = op==='>'||op==='≥' ? false : pr<=alfa && !(op==='=' && pr===alfa);
+        const sigCal = p0<alfa;
+        grave = sigRep!==sigCal && (op!=='=' || Math.abs(pr-alfa)>1e-9);
+        uni = op==='=' && (k==='t'||k==='z') && Math.abs(pr-p0/2) <= up+1e-9;
+        estado = uni ? 'unilateral' : grave ? 'decision' : 'inconsistente';
+      }
+      out.push({k,start:m.index,end:m.index+m[0].length,txt:m[0],gl:g,stat:s,op,pRep:pr,pCalc:p0,estado,grave});
+    }});
+  return out.sort((a,b)=>a.start-b.start);
+}
+/* --- porcentajes frente a sus recuentos: «45 de 120 (40 %)», «45/120 (37,5 %)» --- */
+function porcentajes(text){
+  const out=[], rx=/(\d+)\s*(?:de|of|sobre|\/)\s*(\d+)(?:\s+[\p{L}]+){0,3}\s*\(\s*(\d+(?:[.,]\d+)?)\s*%\s*\)/gu; let m;
+  while((m=rx.exec(text))){ const x=+m[1], n=+m[2], p=numES(m[3]); if(!n||x>n*1.0001&&false) continue;
+    const real=x/n*100, tol=0.5*Math.pow(10,-decs(m[3]))+1e-9;
+    out.push({start:m.index,end:m.index+m[0].length,txt:m[0],x,n,p,real,ok:Math.abs(real-p)<=tol, imposible:x>n}); }
+  return out;
+}
+/* --- estimación frente a su IC 95 % y coherencia IC ↔ p --- */
+const EST_RX = /(OR\s*ajustad[ao]|ORa|aOR|OR|RR|HR|RP|IRR|RRR|β|B|b|d de Cohen|d|g de Hedges|g|DM|MD|diferencia(?:\s+de\s+medias)?(?:\s+ajustada)?|mean difference|coeficiente)\s*=\s*([-−–]?\s?(?:\d+(?:[.,]\d+)?|[.,]\d+))\s*$/i;
+const RATIO = /^(OR|ORa|aOR|RR|HR|RP|IRR|RRR)|ajustad/i;
+function intervalos(text){
+  const out=[], rx=/(?:\b(?:IC|CI)\s*(?:del\s*|al\s*)?95\s*%?|95\s*%\s*(?:IC|CI)|intervalo de confianza(?: del)? 95\s*%?)/gi; let m;
+  while((m=rx.exec(text))){
+    const after=text.slice(m.index+m[0].length, m.index+m[0].length+60);
+    const lim=after.match(new RegExp(`^\\s*[:=,]?\\s*[\\[(]?\\s*(${NUM})\\s*(?:[-–—]|\\s+a\\s+|\\s+to\\s+|;|,\\s)\\s*(${NUM})`,'i'));
+    if(!lim) continue;
+    const before=text.slice(Math.max(0,m.index-70), m.index).replace(/[\s(\[,;:]+$/,'');
+    const e=before.match(EST_RX); const lo=numES(lim[1]), hi=numES(lim[2]);
+    const endCI=m.index+m[0].length+lim[0].length;
+    const pm=text.slice(endCI, endCI+40).match(new RegExp(`^[^.\\n]{0,20}?\\bp\\s*([=<>≤≥])\\s*(${NUM})`,'i'));
+    const r={start:e?m.index-(before.length-before.lastIndexOf(e[0]))-(text.slice(Math.max(0,m.index-70),m.index).length-before.length):m.index, end:endCI+(pm?pm[0].length:0), lo, hi, problemas:[]};
+    r.start=Math.max(0,r.start); r.txt=text.slice(r.start,r.end);
+    if(lo>hi) r.problemas.push({g:'alta',msg:`El límite inferior (${lim[1].trim()}) es mayor que el superior (${lim[2].trim()}).`});
+    if(e){ const est=numES(e[2]); r.medida=e[1]; r.est=est; const tol=0.5*Math.pow(10,-Math.max(decs(e[2]),1));
+      if(est<Math.min(lo,hi)-tol||est>Math.max(lo,hi)+tol) r.problemas.push({g:'alta',msg:`La estimación ${e[1]} = ${e[2].trim()} queda fuera de su propio intervalo (${lim[1].trim()} a ${lim[2].trim()}).`});
+      const ratio=RATIO.test(e[1]); if(ratio && (lo<=0||hi<=0)) r.problemas.push({g:'alta',msg:`Un ${e[1]} no puede tener un intervalo con valores ≤ 0.`});
+      if(pm){ const nulo=ratio?1:0, excl=Math.min(lo,hi)>nulo||Math.max(lo,hi)<nulo, p=numES(pm[2]), op=pm[1];
+        const sig = op==='<'||op==='≤' ? p<=0.05 : op==='=' ? p<0.05 : false;
+        if(excl && !sig && (op==='='||op==='>'||op==='≥')) r.problemas.push({g:'media',msg:`El IC 95 % excluye el ${nulo} (sin efecto), pero p = ${pm[2].trim()} no es significativo: no son coherentes.`});
+        if(!excl && sig) r.problemas.push({g:'media',msg:`El IC 95 % incluye el ${nulo} (sin efecto), pero p ${op} ${pm[2].trim()} es significativo: no son coherentes.`}); } }
+    out.push(r);
+  }
+  return out;
+}
+
+
+/* ══════════ CITAS Y REFERENCIAS ══════════ */
+const REF_HEAD = /^\s*(?:\d+[.)]?\s*)?(referencias(?: bibliogr[aá]ficas)?|references|bibliograf[ií]a|literatura citada|works cited)\s*$/i;
+const normTxt = t => String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9ñ ]+/g,' ').replace(/\s+/g,' ').trim();
+/* devuelve {cuerpoFin, entradas:[{i,num,texto,start,end,apellido,anio,doi,titulo}]} */
+function extraerReferencias(text){
+  const lines = text.split('\n'); let pos = 0, inicio = -1, cabecera = -1;
+  for(const L of lines){ if(REF_HEAD.test(L.trim())){ cabecera = pos; inicio = pos + L.length + 1; } pos += L.length + 1; }
+  if(inicio < 0) return {cuerpoFin:text.length, entradas:[]};
+  const trozo = text.slice(inicio);
+  /* fin de la bibliografía: siguiente encabezado típico (anexos, tablas) */
+  const finM = trozo.match(/\n\s*(?:ap[eé]ndice|anexo|appendix|tablas?|figuras?|material suplementario)\b[^\n]{0,60}\n/i);
+  const bloque = finM ? trozo.slice(0, finM.index) : trozo;
+  const crudas = []; let off = 0;
+  const ls = bloque.split('\n');
+  const nueva = l => /^\s*(\[\d+\]|\d+[.)]\s|[A-ZÁÉÍÓÚÑÜ][\p{L}'’-]+(?:\s+[A-ZÁÉÍÓÚÑÜ][\p{L}'’-]+)?,\s*(?:[A-ZÁÉÍÓÚÑ]\.|[A-ZÁÉÍÓÚÑ][a-z]))/u.test(l) || /^\s*[A-ZÁÉÍÓÚÑ][\p{L}'’-]+\s+[A-Z]{1,3}[,.]/u.test(l);
+  let cur = null;
+  ls.forEach(l => {
+    const s = inicio + off; off += l.length + 1;
+    if(!l.trim()){ if(cur){ crudas.push(cur); cur = null; } return; }
+    if(!cur || nueva(l)){ if(cur) crudas.push(cur); cur = {start:s + (l.length - l.trimStart().length), end:s + l.length, texto:l.trim()}; }
+    else { cur.texto += ' ' + l.trim(); cur.end = s + l.length; }
+  });
+  if(cur) crudas.push(cur);
+  const entradas = crudas.filter(c => c.texto.length > 25).map((c,i) => {
+    const t = c.texto, numM = t.match(/^\s*\[?(\d+)[\].)]/);
+    const cuerpo = t.replace(/^\s*\[?\d+[\].)]\s*/, '');
+    const apellido = (cuerpo.match(/^([\p{L}'’-]+)/u) || [])[1] || '';
+    const anio = ((cuerpo.match(/\((\d{4})[a-z]?\)/) || cuerpo.match(/\b((?:19|20)\d{2})[a-z]?\b/) || [])[1]) || '';
+    const doi = ((t.match(/\b10\.\d{4,9}\/[^\s"<>]+/) || [])[0] || '').replace(/[.,;)\]]+$/, '');
+    let titulo = (cuerpo.match(/\(\d{4}[a-z]?\)\.\s*(.+?)[.?!](?:\s|$)/) || [])[1];
+    if(!titulo){ const segs = cuerpo.split(/\.\s+/).map(x => x.trim()); titulo = segs.slice(1).sort((a,b) => b.length - a.length)[0] || cuerpo; }
+    return {i:i+1, num:numM ? +numM[1] : null, texto:t, start:c.start, end:c.end, apellido, anio, doi, titulo:titulo.slice(0, 220)};
+  });
+  return {cuerpoFin:cabecera, entradas};
+}
+/* citas en el cuerpo: (García, 2019; Pérez y López, 2020a), García et al. (2019), [3], [1–4] */
+function extraerCitas(text, fin){
+  const cuerpo = text.slice(0, fin), out = [];
+  const rxPar = /\(([^()]{0,300}?\b(?:19|20)\d{2}[a-z]?[^()]{0,120}?)\)/g; let m;
+  while((m = rxPar.exec(cuerpo))){
+    const dentro = m[1]; if(/\b(IC|CI|p\s*[=<]|n\s*=|OR\s*=)/.test(dentro)) continue;
+    dentro.split(/;/).forEach(part => {
+      const a = part.match(/([A-ZÁÉÍÓÚÑÜ][\p{L}'’-]+)(?:[^,;]*?)?,?\s*((?:19|20)\d{2})[a-z]?/u);
+      if(a) out.push({tipo:'ay', apellido:a[1], anio:a[2], start:m.index, end:m.index + m[0].length, txt:m[0]});
+    });
+  }
+  const rxNar = /([A-ZÁÉÍÓÚÑÜ][\p{L}'’-]+)(?:\s+(?:et al\.|y col\.|y cols\.)|\s+(?:y|and|&|e)\s+[A-ZÁÉÍÓÚÑÜ][\p{L}'’-]+)?\s+\(((?:19|20)\d{2})[a-z]?\)/gu;
+  while((m = rxNar.exec(cuerpo))) out.push({tipo:'ay', apellido:m[1], anio:m[2], start:m.index, end:m.index + m[0].length, txt:m[0]});
+  const rxNum = /\[(\d+(?:\s*[-–,]\s*\d+)*)\]/g;
+  while((m = rxNum.exec(cuerpo))){
+    const nums = []; m[1].split(',').forEach(p => { const r = p.split(/[-–]/).map(x => +x.trim()); if(r.length === 2 && r[1] >= r[0] && r[1] - r[0] < 40) for(let k = r[0]; k <= r[1]; k++) nums.push(k); else nums.push(r[0]); });
+    nums.forEach(n => out.push({tipo:'num', num:n, start:m.index, end:m.index + m[0].length, txt:m[0]}));
+  }
+  return out.sort((a,b) => a.start - b.start);
+}
+function emparejar(citas, entradas){
+  const usadas = new Set(), huerfanas = [];
+  citas.forEach(c => {
+    let e = null;
+    if(c.tipo === 'num') e = entradas.find(x => x.num === c.num) || (entradas.every(x => x.num == null) ? entradas[c.num - 1] : null);
+    else { const ap = normTxt(c.apellido); e = entradas.find(x => x.anio === c.anio && normTxt(x.texto.slice(0, 120)).includes(ap)); }
+    c.ref = e || null;
+    if(e) usadas.add(e.i); else huerfanas.push(c);
+  });
+  return {huerfanas, noCitadas:entradas.filter(e => !usadas.has(e.i))};
+}
+/* ── verificación externa: OpenAlex (y Crossref de respaldo) ── */
+const semejantes = (a, b) => { const A = normTxt(a).split(' ').filter(w => w.length > 3), B = ' ' + normTxt(b) + ' '; if(!A.length) return 0; return A.filter(w => B.includes(' ' + w + ' ')).length / A.length; };
+function abstractDe(inv){ if(!inv) return ''; const o = []; Object.entries(inv).forEach(([w,ps]) => ps.forEach(p => o[p] = w)); return o.filter(Boolean).join(' '); }
+async function verificaReferencia(e, mailto){
+  const mail = mailto ? '&mailto=' + encodeURIComponent(mailto) : '';
+  const campos = 'id,doi,title,display_name,publication_year,authorships,is_retracted,abstract_inverted_index,primary_location';
+  let w = null, fuente = 'OpenAlex';
+  try{
+    if(e.doi){ const r = await fetch(`https://api.openalex.org/works/https://doi.org/${encodeURIComponent(e.doi)}?select=${campos}${mail}`); if(r.ok) w = await r.json(); }
+    if(!w){ const r = await fetch(`https://api.openalex.org/works?search=${encodeURIComponent(e.titulo.slice(0, 200))}&per_page=5&select=${campos}${mail}`);
+      if(r.ok){ const j = await r.json(); w = (j.results || []).find(x => semejantes(x.title || x.display_name || '', e.titulo) >= 0.7 || semejantes(e.titulo, x.title || '') >= 0.7) || null; } }
+  }catch(err){}
+  if(!w){
+    try{ const r = await fetch(`https://api.crossref.org/works?query.bibliographic=${encodeURIComponent(e.texto.slice(0, 300))}&rows=3&select=DOI,title,issued,author`);
+      if(r.ok){ const j = await r.json(); const it = (j.message?.items || []).find(x => x.title && semejantes(x.title[0], e.titulo) >= 0.7);
+        if(it){ fuente = 'Crossref'; w = {title:it.title[0], doi:'https://doi.org/' + it.DOI, publication_year:it.issued?.['date-parts']?.[0]?.[0], authorships:(it.author || []).map(a => ({author:{display_name:(a.given || '') + ' ' + (a.family || '')}})), is_retracted:false}; } } }
+    catch(err){ return {estado:'error', msg:'No se pudo consultar OpenAlex ni Crossref.'}; }
+  }
+  if(!w) return {estado:'no_encontrada', msg:'No aparece en OpenAlex ni en Crossref: puede no existir o estar mal escrita.'};
+  const titulo = w.title || w.display_name || '', anio = w.publication_year, primer = w.authorships?.[0]?.author?.display_name || '';
+  const res = {fuente, titulo, anio, doi:w.doi, url:w.doi || w.id, primer, abstract:abstractDe(w.abstract_inverted_index).slice(0, 1500), revista:w.primary_location?.source?.display_name || ''};
+  if(w.is_retracted) return {...res, estado:'retractada', msg:'El trabajo está marcado como retractado en OpenAlex.'};
+  const probs = [];
+  if(e.anio && anio && Math.abs(+e.anio - anio) > 1) probs.push(`el año publicado es ${anio}, no ${e.anio}`);
+  if(e.apellido && primer && !normTxt(primer).includes(normTxt(e.apellido)) && !normTxt(e.texto.slice(0, 60)).includes(normTxt(primer.split(' ').pop()))) probs.push(`el primer autor es ${primer}`);
+  if(e.doi && w.doi && !String(w.doi).toLowerCase().includes(e.doi.toLowerCase())) probs.push(`el DOI registrado es ${w.doi}`);
+  return {...res, estado:probs.length ? 'discrepancia' : 'ok', msg:probs.length ? 'Encontrada, pero ' + probs.join('; ') + '.' : 'Encontrada y coincidente.'};
+}
+
+
+/* ============================================================
+   12. RefinIA 2.0 · exactitud de las afirmaciones
+   ============================================================ */
+const EX_OPTS = [
+  ['num','Estadística y coherencia numérica','Recalcula p desde t, F, χ², r y z; cuadra porcentajes; comprueba cada estimación contra su IC 95 %. Sin IA.'],
+  ['refs','Referencias en OpenAlex y Crossref','Detecta referencias inexistentes, retractadas o con año, autor o DOI equivocados, y citas sin referencia. Sin IA.'],
+  ['claims','Afirmaciones frente a su fuente','Compara lo que atribuyes a un trabajo con su resumen real. Usa la IA.'],
+];
+function exOpts(){ const o = Object.assign({num:true, refs:true, claims:true}, cfg.ex || {}); return o; }
+const fmtP = p => p < 0.001 ? '< 0,001' : p.toFixed(p < 0.01 ? 4 : 3).replace('.', ',');
+const ABREV = /(?:\bet al|\bal|\bcol|\bcols|\bFig|\bfig|\bTab|\bEq|\bvs|\bp\.ej|\be\.g|\bi\.e|\bn\.?º|\bpp|\bvol|\bed|\bDr|\bDra|\b[A-ZÁÉÍÓÚÑ])$/;
+function frase(text, pos){
+  let a = pos, b = pos;
+  while(a > 0){ const ch = text[a - 1]; if(ch === '\n' && text[a - 2] === '\n') break; if(/[.!?]/.test(ch) && /\s/.test(text[a] || '') && !ABREV.test(text.slice(Math.max(0, a - 8), a - 1))) break; a--; }
+  while(b < text.length){ const ch = text[b]; if(ch === '\n' && text[b + 1] === '\n') break; if(/[.!?]/.test(ch) && (/\s/.test(text[b + 1] || '') || b + 1 >= text.length) && !ABREV.test(text.slice(Math.max(0, b - 7), b))) { b++; break; } b++; }
+  while(/\s/.test(text[a] || '') && a < b) a++;
+  return [a, b];
+}
+function secAt(doc, pos){ const b = doc.blocks.find(x => pos >= x.start && pos < x.end) || doc.blocks.filter(x => x.start <= pos).pop(); return b ? b.section : 'Documento'; }
+function chunkAt(doc, pos){ const c = doc.chunks.find(x => pos >= x.start && pos <= x.end); return c ? c.id : null; }
+function mkF(doc, o){
+  const h = {id:uid(), titulo:o.titulo, comentario:o.comentario, sugerencia:o.sugerencia || '', severidad:o.sev, confianza:1, categoria:o.cat, lente:'exacta',
+    start:o.start, end:o.end, cita:doc.text.slice(o.start, o.end).replace(/\s+/g, ' ').trim().slice(0, 400), section:secAt(doc, o.start), chunk:chunkAt(doc, o.start),
+    estado:'pendiente', verificado:true, exacto:true, veces:1};
+  return h;
+}
+const CLAIM_PROMPT = `Eres un verificador de citas bibliográficas. Para cada afirmación de un manuscrito compruebas si el trabajo citado RESPALDA lo que se le atribuye, usando EXCLUSIVAMENTE el título y el resumen que se te dan. No uses lo que sepas del trabajo por otras vías.
+Veredictos:
+- "apoya": el resumen sostiene la afirmación tal como está escrita.
+- "parcial": la sostiene solo en parte (otra población, otro desenlace, magnitud o certeza exageradas).
+- "no_apoya": el resumen trata otra cosa o no permite atribuirle esa afirmación.
+- "contradice": el resumen dice lo contrario.
+- "no_comprobable": el resumen es demasiado escueto para decidir.
+Sé estricto con la población, el desenlace, el diseño y el grado de certeza (asociación frente a causa, «demostraron» frente a «sugieren»).
+Responde solo con JSON: {"veredictos":[{"id":"a1","veredicto":"apoya|parcial|no_apoya|contradice|no_comprobable","explicacion":"una o dos frases, citando el resumen"}]}`;
+async function contrastaAfirmaciones(EX, text){
+  const mapa = new Map();
+  EX.citas.forEach(c => {
+    const v = c.ref && c.ref.ver; if(!v || !v.abstract || !['ok','discrepancia'].includes(v.estado)) return;
+    const [a, b] = frase(text, c.start);
+    if(!mapa.has(a)) mapa.set(a, {start:a, end:b, txt:text.slice(a, b).replace(/\s+/g, ' ').trim(), refs:[]});
+    const it = mapa.get(a); if(!it.refs.includes(c.ref)) it.refs.push(c.ref);
+  });
+  const items = [...mapa.values()].slice(0, 30).map((x, i) => Object.assign(x, {id:'a' + (i + 1)}));
+  const lotes = []; for(let i = 0; i < items.length; i += 6) lotes.push(items.slice(i, i + 6));
+  setProgress(0, lotes.length, 'Contrastando afirmaciones con sus fuentes');
+  await pool(lotes, async lote => {
+    const user = lote.map(x => `### ${x.id}\nAfirmación del manuscrito: «${x.txt.slice(0, 700)}»\n` + x.refs.map(r => `Fuente citada: ${r.ver.titulo} (${r.ver.anio || 's.f.'})${r.ver.revista ? ', ' + r.ver.revista : ''}\nResumen: ${r.ver.abstract.slice(0, 1400)}`).join('\n')).join('\n\n');
+    const r = await llm({system:CLAIM_PROMPT + '\n' + langLine(), user, temp:0, maxTokens:1400});
+    (r.veredictos || []).forEach(v => { const x = lote.find(y => y.id === v.id); if(x){ x.veredicto = v.veredicto; x.explicacion = v.explicacion || ''; } });
+    return true;
+  }, Math.min(cfg.conc, 3), (d, n) => setProgress(d, n, 'Contrastando afirmaciones con sus fuentes'));
+  EX.claims = items.map(x => ({start:x.start, end:x.end, txt:x.txt, refs:x.refs.map(r => r.i), veredicto:x.veredicto || 'no_comprobable', explicacion:x.explicacion || ''}));
+}
+async function faseExactitud(doc, depth){
+  const o = exOpts(), text = doc.text, out = [];
+  const EX = state.exact = {stats:[], pct:[], ic:[], entradas:[], citas:[], huerfanas:[], noCitadas:[], claims:[], opts:o, fecha:Date.now()};
+  setProgress(0, 1, 'Recalculando la estadística');
+  if(o.num){ EX.stats = statcheck(text); EX.pct = porcentajes(text); EX.ic = intervalos(text); }
+  if(o.refs || o.claims){
+    const R = extraerReferencias(text); EX.entradas = R.entradas;
+    EX.citas = extraerCitas(text, R.cuerpoFin);
+    const em = emparejar(EX.citas, R.entradas); EX.huerfanas = em.huerfanas; EX.noCitadas = em.noCitadas;
+  }
+  if((o.refs || o.claims) && EX.entradas.length){
+    setProgress(0, EX.entradas.length, 'Verificando referencias en OpenAlex y Crossref');
+    await pool(EX.entradas.slice(0, 150), async e => { e.ver = await verificaReferencia(e, cfg.mailto); return true; }, 4, (d, n) => setProgress(d, n, 'Verificando referencias en OpenAlex y Crossref'));
+  }
+  if(state.abort) return out;
+  if(o.claims && S.key && EX.citas.length) { try { await contrastaAfirmaciones(EX, text); } catch(e) { console.warn(e); } }
+  /* ── comentarios exactos ── */
+  const K = {t:'t', F:'F', r:'r', chi:'χ²', z:'z'};
+  EX.stats.forEach(r => {
+    if(r.estado === 'ok') return;
+    const gl = r.gl && r.gl.length ? '(' + r.gl.join(', ') + ')' : '';
+    let f;
+    if(r.estado === 'error') f = mkF(doc, {titulo:'Coeficiente imposible', comentario:r.msg, sugerencia:'Comprueba el valor en la salida del análisis.', sev:'alta', cat:'Estadística recalculada', start:r.start, end:r.end});
+    else if(r.estado === 'unilateral') f = mkF(doc, {titulo:'Posible contraste unilateral no declarado', comentario:`Con ${K[r.k]}${gl} = ${String(r.stat).replace('.', ',')}, el p bilateral es ${fmtP(r.pCalc)}; el informado (${String(r.pRep).replace('.', ',')}) es justo la mitad.`, sugerencia:'Si el contraste es unilateral, decláralo y justifícalo en Métodos; si no, corrige el valor p.', sev:'baja', cat:'Estadística recalculada', start:r.start, end:r.end});
+    else f = mkF(doc, {titulo:r.estado === 'decision' ? 'El valor p no corresponde al estadístico y cambia la conclusión' : 'El valor p no corresponde al estadístico',
+      comentario:`Con ${K[r.k]}${gl} = ${String(r.stat).replace('.', ',')}, el p bilateral es ${fmtP(r.pCalc)}, no ${r.op} ${String(r.pRep).replace('.', ',')}.${r.estado === 'decision' ? ' Con α = 0,05 la decisión sobre la significación se invierte.' : ''}`,
+      sugerencia:'Revisa en la salida del análisis el estadístico, los grados de libertad y el valor p, y corrige el que esté mal.', sev:r.estado === 'decision' ? 'alta' : 'media', cat:'Estadística recalculada', start:r.start, end:r.end});
+    r.fid = f.id; out.push(f);
+  });
+  EX.pct.forEach(r => { if(r.ok) return; const f = mkF(doc, {titulo:r.imposible ? 'Recuento imposible' : 'El porcentaje no cuadra con su recuento', comentario:r.imposible ? `${r.x} no puede ser una parte de ${r.n}.` : `${r.x} de ${r.n} es el ${r.real.toFixed(1).replace('.', ',')} %, no el ${String(r.p).replace('.', ',')} %.`, sugerencia:'Recalcula el porcentaje o corrige el numerador o el denominador.', sev:r.imposible || Math.abs(r.real - r.p) > 5 ? 'alta' : 'media', cat:'Coherencia numérica', start:r.start, end:r.end}); r.fid = f.id; out.push(f); });
+  EX.ic.forEach(r => { if(!r.problemas.length) return; const alta = r.problemas.some(p => p.g === 'alta'); const f = mkF(doc, {titulo:alta ? 'Estimación e intervalo de confianza incompatibles' : 'El intervalo de confianza y el valor p no son coherentes', comentario:r.problemas.map(p => p.msg).join(' '), sugerencia:'Comprueba en la salida la estimación, los límites del IC 95 % y el valor p.', sev:alta ? 'alta' : 'media', cat:'Coherencia numérica', start:r.start, end:r.end}); r.fid = f.id; out.push(f); });
+  const vistos = new Set();
+  EX.huerfanas.forEach(c => { const k = c.start + '|' + c.apellido; if(vistos.has(k)) return; vistos.add(k); const f = mkF(doc, {titulo:'Cita sin referencia en la bibliografía', comentario:`${c.apellido}${c.anio ? ' (' + c.anio + ')' : ''}${c.num ? '[' + c.num + ']' : ''} se cita en el texto, pero no aparece en la lista de referencias.`, sugerencia:'Añade la referencia completa o corrige el autor o el año de la cita.', sev:'media', cat:'Citas y referencias', start:c.start, end:c.end}); c.fid = f.id; out.push(f); });
+  EX.entradas.forEach(e => {
+    const v = e.ver, noCit = EX.noCitadas.includes(e);
+    const usos = EX.citas.filter(c => c.ref === e).length;
+    if(v && v.estado === 'retractada'){ const f = mkF(doc, {titulo:'Referencia retractada', comentario:`«${v.titulo}» (${v.anio}) está retractada según OpenAlex${usos ? ` y se cita ${usos} ${usos === 1 ? 'vez' : 'veces'} en el texto` : ''}.`, sugerencia:'Elimina la cita o sustitúyela por la versión corregida o republicada, si existe, y revisa las afirmaciones que se apoyaban en ella.', sev:'alta', cat:'Citas y referencias', start:e.start, end:e.end}); e.fid = f.id; out.push(f); }
+    else if(v && v.estado === 'no_encontrada'){ const f = mkF(doc, {titulo:'Referencia no localizada', comentario:'No aparece en OpenAlex ni en Crossref. Puede estar mal escrita, ser literatura gris o no existir (algo frecuente cuando la bibliografía la ha generado una IA).', sugerencia:'Comprueba la referencia en la fuente original y añade su DOI si lo tiene.', sev:'media', cat:'Citas y referencias', start:e.start, end:e.end}); e.fid = f.id; out.push(f); }
+    else if(v && v.estado === 'discrepancia'){ const f = mkF(doc, {titulo:'Datos de la referencia que no coinciden', comentario:`${v.msg} Registro encontrado: ${v.titulo}${v.revista ? ', ' + v.revista : ''}.`, sugerencia:'Corrige la referencia con los datos del registro (o comprueba que se trata de otra obra).', sev:/año/.test(v.msg) ? 'media' : 'baja', cat:'Citas y referencias', start:e.start, end:e.end}); e.fid = f.id; out.push(f); }
+    if(noCit && !(v && v.estado === 'retractada')){ const f = mkF(doc, {titulo:'Referencia que no se cita en el texto', comentario:'Aparece en la bibliografía, pero no hay ninguna cita que remita a ella.', sugerencia:'Cítala donde corresponda o elimínala de la lista.', sev:'baja', cat:'Citas y referencias', start:e.start, end:e.end}); e.fidNc = f.id; out.push(f); }
+  });
+  EX.claims.forEach(x => {
+    if(!['no_apoya','contradice','parcial'].includes(x.veredicto)) return;
+    const refs = x.refs.map(i => EX.entradas.find(e => e.i === i)).filter(Boolean).map(e => `${e.apellido} (${e.anio})`).join(', ');
+    const f = mkF(doc, {titulo:x.veredicto === 'contradice' ? 'La fuente citada dice lo contrario' : x.veredicto === 'no_apoya' ? 'La fuente citada no respalda esta afirmación' : 'La fuente citada solo la respalda en parte',
+      comentario:`${x.explicacion} (Juicio basado en el título y el resumen de ${refs} en OpenAlex.)`, sugerencia:'Matiza la afirmación para que diga lo mismo que la fuente, o cita un trabajo que sí la respalde.', sev:x.veredicto === 'parcial' ? 'baja' : x.veredicto === 'contradice' ? 'alta' : 'media', cat:'Afirmación y fuente', start:x.start, end:x.end});
+    f.exacto = false; f.confianza = 0.8;
+    x.fid = f.id; out.push(f);
+  });
+  return out;
+}
+/* ── panel de exactitud ── */
+function renderExact(){
+  const EX = state.exact, box = $('#exactBox');
+  if(!EX){ box.innerHTML = '<div class="empty"><h3>Sin comprobaciones</h3><p>Ejecuta una revisión con las comprobaciones de exactitud activadas.</p></div>'; return; }
+  const est = {ok:0, mal:0};
+  const cuenta = (ok) => ok ? est.ok++ : est.mal++;
+  EX.stats.forEach(r => cuenta(r.estado === 'ok')); EX.pct.forEach(r => cuenta(r.ok)); EX.ic.forEach(r => cuenta(!r.problemas.length));
+  EX.entradas.forEach(e => { if(e.ver && e.ver.estado !== 'error') cuenta(e.ver.estado === 'ok'); });
+  EX.claims.forEach(x => { if(x.veredicto !== 'no_comprobable') cuenta(x.veredicto === 'apoya'); });
+  const tot = est.ok + est.mal, idx = tot ? Math.round(est.ok / tot * 100) : 100;
+  const col = idx >= 85 ? 'var(--forjado)' : idx >= 65 ? '#F59E0B' : 'var(--brasa)';
+  const row = (d, t, sub, fid, extra = '') => `<div class="ex-row" ${fid ? `data-f="${fid}"` : ''}><span class="d ${d}"></span><span style="flex:1">${t}${sub ? `<small>${sub}</small>` : ''}${extra}</span></div>`;
+  const K = {t:'t', F:'F', r:'r', chi:'χ²', z:'z'}, SEV = {decision:'alta', inconsistente:'media', unilateral:'baja', error:'alta', ok:''};
+  let h = `<div class="qa" style="box-shadow:none;margin-bottom:12px"><div class="qa-top"><div class="ring" style="--p:${idx};--rc:${col}"><b>${idx}</b></div><div><h3>Índice de exactitud</h3><span>${est.ok} de ${tot} comprobaciones superadas</span></div></div></div>`;
+  if(EX.opts.num){
+    h += `<div class="ex-sec">${ico('scale')}Estadística recalculada · ${EX.stats.length}</div>`;
+    h += EX.stats.length ? EX.stats.map(r => row(SEV[r.estado], `<code>${esc(r.txt)}</code>`, r.estado === 'ok' ? `p recalculado ${fmtP(r.pCalc)}: correcto` : r.estado === 'error' ? esc(r.msg) : `p recalculado ${fmtP(r.pCalc)}${r.estado === 'decision' ? ' · cambia la conclusión' : r.estado === 'unilateral' ? ' · ¿unilateral?' : ''}`, r.fid)).join('') : '<p class="help">No se han encontrado pruebas en formato t(gl) = …, p = … ni equivalentes.</p>';
+    h += `<div class="ex-sec">${ico('check')}Porcentajes e intervalos · ${EX.pct.length + EX.ic.length}</div>`;
+    h += EX.pct.map(r => row(r.ok ? '' : 'media', `<code>${esc(r.txt)}</code>`, r.ok ? 'Cuadra' : `Debería ser ${r.real.toFixed(1).replace('.', ',')} %`, r.fid)).join('') + EX.ic.map(r => row(r.problemas.length ? (r.problemas.some(p => p.g === 'alta') ? 'alta' : 'media') : '', `<code>${esc(r.txt)}</code>`, r.problemas.length ? esc(r.problemas.map(p => p.msg).join(' ')) : 'Estimación dentro del intervalo y coherente con p', r.fid)).join('') || '<p class="help">No se han encontrado.</p>';
+  }
+  if(EX.opts.refs || EX.opts.claims){
+    const E = {ok:['','Verificada'], discrepancia:['media','Discrepancia'], no_encontrada:['media','No localizada'], retractada:['alta','Retractada'], error:['gris','Sin conexión']};
+    h += `<div class="ex-sec">${ico('book')}Referencias · ${EX.entradas.length}</div>`;
+    h += EX.entradas.length ? EX.entradas.map(e => { const v = e.ver || {estado:'error'}; const [d, l] = E[v.estado] || ['gris','—']; const nc = EX.noCitadas.includes(e);
+      return row(d || (nc ? 'baja' : ''), `<b>${l}</b>${nc ? ' · <span style="color:var(--baja)">no citada</span>' : ''} · ${esc(e.texto.slice(0, 110))}${e.texto.length > 110 ? '…' : ''}`, v.estado !== 'ok' && v.msg ? esc(v.msg) : '', e.fid || e.fidNc, v.url ? ` <a href="${esc(v.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">ver registro</a>` : ''); }).join('')
+      : '<p class="help">No se ha encontrado una sección de referencias (Referencias, References, Bibliografía).</p>';
+    if(EX.huerfanas.length) h += `<div class="ex-sec">${ico('target')}Citas sin referencia · ${EX.huerfanas.length}</div>` + EX.huerfanas.map(c => row('media', `<code>${esc(c.txt)}</code>`, '', c.fid)).join('');
+    if(EX.claims.length){ const V = {apoya:['','La respalda'], parcial:['baja','La respalda en parte'], no_apoya:['media','No la respalda'], contradice:['alta','Dice lo contrario'], no_comprobable:['gris','No comprobable con el resumen']};
+      h += `<div class="ex-sec">${ico('eye')}Afirmaciones frente a su fuente · ${EX.claims.length}</div>` + EX.claims.map(x => { const [d, l] = V[x.veredicto] || V.no_comprobable; return row(d, `<b>${l}</b> · ${esc(x.txt.slice(0, 140))}${x.txt.length > 140 ? '…' : ''}`, esc(x.explicacion), x.fid); }).join(''); }
+  }
+  h += `<p class="help" style="margin-top:14px">Las comprobaciones de estadística, números y referencias son exactas. El contraste con la fuente se basa solo en el resumen: si el resumen no basta, se marca como no comprobable.</p>`;
+  box.innerHTML = h;
+  $$('#exactBox [data-f]').forEach(r => r.addEventListener('click', () => { const f = state.findings.find(x => x.id === r.dataset.f); if(!f) return; setSide('com'); if(f.estado !== 'pendiente') { state.filters.estado = 'todos'; refresh(); } selectFinding(f.id, 'list', true); }));
+}
+function setSide(t){ $$('.sidetabs [data-st]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.st === t))); $('#paneCom').classList.toggle('hidden', t !== 'com'); $('#paneEx').classList.toggle('hidden', t !== 'ex'); }
+
+/* ============================================================
+   13. Navegación y pantallas (estilo Forja)
+   ============================================================ */
+const ico = n => `<svg class="i"><use href="#i-${n}"/></svg>`;
+let step = 0, busy = false;
+const STEPS = ['Inicio','Ajustes','Manuscrito','Revisión','Informe'];
+function buildStepper(){
+  $('#stepper').innerHTML = STEPS.map((s, i) => `${i ? `<span class="sline${i <= step ? ' on' : ''}"></span>` : ''}<button class="sdot" type="button" data-go="${i}" data-state="${i < step ? 'done' : i === step ? 'now' : ''}" ${busy || state.running ? 'disabled' : ''} ${i === step ? 'aria-current="step"' : ''}><span class="n">${i < step ? ico('check') : i === 0 ? ico('shield') : i === 1 ? ico('key') : i - 1}</span><span class="lbl">${s}</span></button>`).join('');
+  $$('#stepper [data-go]').forEach(b => b.onclick = () => go(+b.dataset.go));
+}
+function go(i){
+  if(state.running && i !== 4) return;
+  if(i === 4 && !state.doc){ toast('Todavía no hay ninguna revisión'); i = 2; }
+  step = i;
+  $$('.screen').forEach(s => s.classList.toggle('on', +s.dataset.step === i));
+  document.body.classList.toggle('ws', i === 4);
+  $('#progBar').style.width = (i / 4 * 100) + '%';
+  buildStepper(); updateNav();
+  if(i === 1){ fillSettings(); refreshKeyLight(); }
+  if(i === 3){ updateEstimate(); updateKeyWarn(); }
+  if(i === 4) setTimeout(renderSpine, 50);
+  window.scrollTo({top:0, behavior:'instant'});
+}
+const HINTS = ['Empieza con tu manuscrito o prueba el <b>ejemplo</b>.', 'Sin clave puedes hacer las <b>comprobaciones exactas</b>.', 'Incluye la <b>bibliografía</b> para verificar las referencias.', 'Para empezar, prueba <b>Solo exactitud</b>: es rápida y casi gratuita.', ''];
+const NEXT = ['Empezar','Siguiente: el manuscrito','Siguiente: qué revisar','Revisar el documento',''];
+function updateNav(){ $('#navBack').classList.toggle('hidden', step === 0); $('#navNextTxt').textContent = NEXT[step]; $('#navHint').innerHTML = HINTS[step]; }
+$('#navBack').onclick = () => { if(step > 0) go(step - 1); };
+$('#navNext').onclick = () => {
+  if(step === 0) return go(S.key ? 2 : 1);
+  if(step === 1) return go(2);
+  if(step === 2){ const t = pending ? pending.text : $('#paste').value; if(!t || words(t) < 60) return toast('Carga o pega antes el manuscrito (al menos 60 palabras)'); if(!pending) pending = null; return go(3); }
+  if(step === 3) return $('#btnRun').click();
+};
+$('#goHome').onclick = () => go(0);
+function setLight(s, m){ $('#keyLight').dataset.s = s; $('#keyMsg').textContent = m; }
+function refreshKeyLight(){ if(!S.key) setLight('', 'Sin clave: solo comprobaciones exactas'); else if(!$('#keyLight').dataset.s) setLight('', 'Clave guardada · pulsa «Comprobar clave» si quieres verificarla'); }
+$('#btnEye').onclick = () => { const k = $('#sKey'); k.type = k.type === 'password' ? 'text' : 'password'; };
+$('#btnTest').onclick = async () => {
+  const k = $('#sKey').value.trim(); if(!k) return setLight('err', 'Primero pega la clave');
+  setLight('wait', 'Comprobando…');
+  try{ const r = await fetch(cfg.base.replace(/\/+$/, '') + '/models', {headers:{Authorization:'Bearer ' + k}}); r.ok ? setLight('ok', 'Clave válida.') : setLight('err', r.status === 401 ? 'OpenAI no reconoce esta clave.' : 'Error ' + r.status); }
+  catch(e){ setLight('err', 'No hay conexión con OpenAI.'); }
+};
+function buildChecks(){
+  const o = exOpts();
+  $('#exChecks').innerHTML = EX_OPTS.map(([k, t, d]) => `<label class="lens ex"><input type="checkbox" data-ex="${k}" ${o[k] ? 'checked' : ''}><span><b>${t}</b><small>${d}</small></span></label>`).join('');
+  $$('#exChecks [data-ex]').forEach(i => i.onchange = () => { cfg.ex = Object.assign(exOpts(), {[i.dataset.ex]:i.checked}); S.save(cfg); updateEstimate(); });
+}
+$$('.sidetabs [data-st]').forEach(b => b.onclick = () => setSide(b.dataset.st));
+$('#btnRecent').onclick = async () => { await renderRecent(); $('#mRecent').classList.add('on'); };
+$('#btnHelp').onclick = () => $('#mHelp').classList.add('on');
+$('#btnReRun').onclick = () => { if(state.running) return; if(state.doc){ pending = {name:state.doc.name, text:state.doc.text}; $('#paste').value = state.doc.text; $('#ctx').value = state.doc.context || ''; } go(3); };
+function closeModals(){ $$('.modal').forEach(m => m.classList.remove('on')); }
+$$('.modal').forEach(m => m.addEventListener('click', e => { if(e.target === m || e.target.hasAttribute('data-mclose')) closeModals(); }));
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModals(); });
+const GLOS = [
+  ['Comprobación exacta','Se calcula, no se opina: o el número cuadra o no cuadra. Aparece marcada en el comentario.'],
+  ['Valor p recalculado','A partir de t, F, χ², r o z y sus grados de libertad se obtiene el p bilateral, teniendo en cuenta el redondeo de lo publicado (como hace statcheck).'],
+  ['Error de decisión','El p recalculado y el informado quedan a lados distintos de α = 0,05: cambia la conclusión del contraste.'],
+  ['IC incoherente','La estimación queda fuera de su intervalo, o el intervalo y el valor p dicen cosas distintas sobre la significación.'],
+  ['Referencia no localizada','No está en OpenAlex ni en Crossref. Puede ser literatura gris, estar mal escrita o no existir.'],
+  ['Referencia retractada','OpenAlex la marca como retirada por la revista. No debería sostener ninguna afirmación.'],
+  ['Afirmación frente a fuente','Un agente compara lo que dices que dice un trabajo con su resumen. Solo juzga con el resumen; si no basta, lo declara.'],
+  ['Lentes','Lecturas especializadas en paralelo: exactitud, matemática, método, consistencia, referencias y argumentación.'],
+  ['Filtro anti-ruido','Un verificador descarta los comentarios genéricos o que no se sostienen con el texto.'],
+  ['Privacidad','El texto va de tu navegador a OpenAI. Las referencias se buscan en OpenAlex y Crossref. No hay servidor intermedio.'],
+];
+$('#glos').innerHTML = GLOS.map(g => `<div><b>${esc(g[0])}</b><span>${esc(g[1])}</span></div>`).join('');
+/* ── manuscrito de ejemplo ── */
+const EJEMPLO_TXT = "Efecto de la dieta mediterránea sobre la memoria de trabajo en adultos mayores: estudio transversal\n\nResumen\nSe estudió la relación entre la adherencia a la dieta mediterránea y la memoria de trabajo en 120 adultos mayores. La adherencia alta causó una mejora de la memoria de trabajo.\n\n1. Introducción\nLa dieta mediterránea se ha asociado con menor riesgo cardiovascular (Estruch et al., 2013). Estruch et al. (2018) demostraron además que esta dieta mejora la memoria de trabajo en adolescentes. Estudios previos han encontrado efectos similares en población universitaria (Martínez-Ruiz y Ortega, 2021) y en mayores institucionalizados (López y Serra, 2017).\n\n2. Métodos\nSe incluyeron 120 participantes de 65 a 80 años reclutados en centros de salud de Alicante. La adherencia se midió con el cuestionario MEDAS de 14 puntos y la memoria de trabajo con la prueba de dígitos inversos. Se consideraron significativos los valores p < 0,05. La potencia se calculó según Cohen (1988).\n\n3. Resultados\nEn total, 45 de 120 participantes (40,0 %) eran mujeres y 30 de 120 (25,0 %) fumaban. Los participantes con adherencia alta obtuvieron mejores puntuaciones de memoria (t(58) = 2,10; p = 0,002). Hubo diferencias entre los tres niveles de adherencia, F(2, 87) = 2,31, p = 0,03. La asociación entre adherencia y sexo fue significativa, χ2(1) = 4,12, p = 0,042, y la memoria se correlacionó con la edad, r(98) = 0,25; p = 0,012.\nLa baja adherencia se asoció con peor memoria (OR = 1,80; IC 95 %: 2,10 a 3,40). La obesidad también se asoció con el deterioro (OR = 2,40; IC 95 %: 1,60 a 3,60; p = 0,21).\n\n4. Discusión\nEn los 118 participantes analizados, la dieta mediterránea protege frente al deterioro de la memoria de trabajo, en línea con Altman y Bland (1999), que mostraron que la ausencia de diferencias demuestra la equivalencia entre tratamientos.\n\nReferencias\nAltman, D. G., & Bland, J. M. (1999). Absence of evidence is not evidence of absence. BMJ, 311(7003), 485.\nCohen, J. (1988). Statistical power analysis for the behavioral sciences (2nd ed.). Lawrence Erlbaum Associates.\nEstruch, R., Ros, E., Salas-Salvadó, J., et al. (2013). Primary prevention of cardiovascular disease with a Mediterranean diet. New England Journal of Medicine, 368(14), 1279-1290. https://doi.org/10.1056/NEJMoa1200303\nEstruch, R., Ros, E., Salas-Salvadó, J., et al. (2018). Primary prevention of cardiovascular disease with a Mediterranean diet supplemented with extra-virgin olive oil or nuts. New England Journal of Medicine, 378(25), e34. https://doi.org/10.1056/NEJMoa1800389\nMartínez-Ruiz, P., & Ortega, L. (2021). Efecto de la dieta mediterránea en la memoria de trabajo de estudiantes universitarios. Revista Iberoamericana de Nutrición Cognitiva, 14(2), 45-58.\nSchulz, K. F., Altman, D. G., & Moher, D. (2010). CONSORT 2010 statement: updated guidelines for reporting parallel group randomised trials. BMJ, 340, c332.\n";
+function cargaEjemplo(){
+  loadIntoApp('ejemplo_dieta_memoria.txt', EJEMPLO_TXT);
+  $('#ctx').value = 'Artículo original breve para una revista de nutrición. Diseño transversal en adultos mayores. Contiene errores sembrados para probar RefinIA.';
+  toast('Manuscrito de ejemplo cargado: tiene errores sembrados de estadística, números, citas y referencias', 5000);
+  go(2);
+}
+$('#btnEj').onclick = cargaEjemplo;
+$('#lnkEj').onclick = e => { e.preventDefault(); cargaEjemplo(); };
+$('#btnStart').onclick = () => go(S.key ? 2 : 1);
+$('#depth').addEventListener('change', updateEstimate);
+/* ── arranque ── */
+init(); buildChecks(); fillSettings(); renderExact(); go(0);
 
 </script>
 </body>
